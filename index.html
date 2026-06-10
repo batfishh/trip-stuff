@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEEP FIELD // KEPLER-442b</title>
+<style>
+  /* ============================================================
+     DEEP FIELD — cinematic overlay styles
+     Palette: void navy #04060f / electric blue #2e7bff
+              signal purple #8b5cf6 / instrument gold #f0b35a
+     ============================================================ */
+  :root {
+    --blue:   #2e7bff;
+    --purple: #8b5cf6;
+    --gold:   #f0b35a;
+    --ink:    #04060f;
+    --hud:    rgba(180, 205, 255, 0.85);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--ink);
+    overflow-x: hidden;
+    font-family: "Courier New", ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  /* invisible scroll runway underneath the fixed canvas */
+  .scroll-space { height: 420vh; width: 100%; pointer-events: none; }
+
+  #scene {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    display: block;
+    z-index: 0;
+  }
+
+  /* ---------- overlay stack ---------- */
+  .overlay { position: fixed; inset: 0; pointer-events: none; }
+
+  #scanlines {
+    z-index: 4;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(160, 200, 255, 0.5) 0px,
+      rgba(160, 200, 255, 0.5) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+    opacity: 0.02;
+    mix-blend-mode: screen;
+  }
+
+  #vignette {
+    z-index: 5;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 50%,
+      rgba(3, 5, 14, 0.30) 80%,
+      rgba(2, 4, 10, 0.68) 100%
+    );
+  }
+
+  /* ---------- corner HUD ---------- */
+  #hud {
+    position: fixed;
+    top: 22px;
+    left: 24px;
+    z-index: 6;
+    pointer-events: none;
+    color: var(--hud);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    line-height: 1.75;
+    text-shadow: 0 0 8px rgba(46, 123, 255, 0.45);
+    opacity: 0;
+    transition: opacity 1.4s ease;
+  }
+  #hud.on { opacity: 1; }
+
+  #hud .feed {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #cfe0ff;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+
+  #status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 10px var(--gold);
+    animation: blink 1.6s steps(1) infinite;
+  }
+  @keyframes blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
+
+  #hud .row span:first-child { color: rgba(140, 165, 215, 0.65); margin-right: 8px; }
+  #hud .val { color: #e8f0ff; }
+  #hud .val.gold { color: var(--gold); }
+
+  #sig-bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 12px; vertical-align: middle; }
+  #sig-bars i {
+    display: block;
+    width: 4px;
+    background: var(--blue);
+    box-shadow: 0 0 6px rgba(46, 123, 255, 0.8);
+    transition: height 0.25s ease, opacity 0.25s ease;
+  }
+
+  #wave {
+    display: block;
+    margin-top: 10px;
+    width: 190px;
+    height: 44px;
+    border: 1px solid rgba(46, 123, 255, 0.25);
+    background: rgba(8, 14, 34, 0.35);
+  }
+
+  #audio-hint {
+    margin-top: 8px;
+    color: var(--gold);
+    opacity: 0.85;
+    animation: blink 2.2s steps(1) infinite;
+  }
+
+  #scroll-hint {
+    position: fixed;
+    bottom: 26px;
+    right: 30px;
+    z-index: 6;
+    pointer-events: none;
+    color: rgba(170, 195, 245, 0.7);
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-shadow: 0 0 8px rgba(46, 123, 255, 0.4);
+    animation: drift 3s ease-in-out infinite;
+    opacity: 0;
+    transition: opacity 1.4s ease;
+  }
+  #scroll-hint.on { opacity: 1; }
+  @keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+
+  /* ---------- boot screen ---------- */
+  #boot {
+    position: fixed;
+    inset: 0;
+    z-index: 9;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #boot-inner {
+    width: min(560px, 86vw);
+    color: #9fc1ff;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    line-height: 2.1;
+    text-shadow: 0 0 10px rgba(46, 123, 255, 0.5);
+  }
+  #boot-inner .line { opacity: 0; white-space: nowrap; overflow: hidden; }
+  #boot-inner .line.show { opacity: 1; }
+  #boot-inner .ok { color: var(--gold); }
+  #caret {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: var(--blue);
+    vertical-align: -2px;
+    animation: blink 0.9s steps(1) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #scroll-hint, #status-dot, #audio-hint, #caret { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="scroll-space"></div>
+
+  <canvas id="scene"></canvas>
+
+  <div class="overlay" id="scanlines"></div>
+  <div class="overlay" id="vignette"></div>
+
+  <div id="hud">
+    <div class="feed"><span id="status-dot"></span>LIVE FEED // KEPLER-442b</div>
+    <div class="row"><span>LAT</span><span class="val" id="t-lat">--</span></div>
+    <div class="row"><span>LON</span><span class="val" id="t-lon">--</span></div>
+    <div class="row"><span>ALT</span><span class="val gold" id="t-alt">--</span></div>
+    <div class="row"><span>SIG</span><span id="sig-bars"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+    <canvas id="wave" width="190" height="44"></canvas>
+    <div id="audio-hint">CLICK TO ENGAGE AUDIO CORTEX</div>
+  </div>
+
+  <div id="scroll-hint">SCROLL TO ASCEND</div>
+
+  <div id="boot">
+    <div id="boot-inner">
+      <div class="line">INITIALIZING DEEP-FIELD ARRAY ............ <span class="ok">OK</span></div>
+      <div class="line">CALIBRATING TERRAIN OSCILLATORS .......... <span class="ok">OK</span></div>
+      <div class="line">SPOOLING PARTICLE MANIFOLD [40,000] ...... <span class="ok">OK</span></div>
+      <div class="line">ALIGNING STELLAR CATALOG [8,000] ......... <span class="ok">OK</span></div>
+      <div class="line">LINKING AUDIO CORTEX ..................... <span class="ok">STANDBY</span></div>
+      <div class="line">SIGNAL ACQUIRED — WELCOME, OBSERVER <span id="caret"></span></div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.58/Tone.js"></script>
+
+<script>
+/* eslint-disable */
+"use strict";
+
+// ===================================================================
+// === INIT ===
+// ===================================================================
+
+gsap.registerPlugin(ScrollTrigger);
+
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Capability gate: halve particle counts on mobile UAs or low-memory machines.
+const IS_MOBILE  = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+const LOW_MEMORY = (typeof navigator.deviceMemory === "number") && navigator.deviceMemory < 4;
+const LOW_END    = IS_MOBILE || LOW_MEMORY;
+
+const GALAXY_COUNT = LOW_END ? 20000 : 40000;
+const STAR_COUNT   = LOW_END ? 4000  : 8000;
+
+const canvas = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({
+  canvas,
+  antialias: false,            // post pass softens edges; MSAA is wasted on a RT pipeline
+  powerPreference: "high-performance",
+  stencil: false,
+  depth: true
+});
+const PIXEL_RATIO = Math.min(window.devicePixelRatio || 1, 1.5); // hard cap
+renderer.setPixelRatio(PIXEL_RATIO);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = false; // non-negotiable
+renderer.setClearColor(0x0a1126, 1);
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1200);
+camera.position.set(0, 7, 19);
+
+// --- Pre-allocated scratch objects: NOTHING is allocated inside the render loop ---
+const _camBase    = new THREE.Vector3(0, 7, 19);   // scroll-driven base position
+const _camPos     = new THREE.Vector3();           // final composed camera position
+const _lookAt     = new THREE.Vector3(0, 2.5, 0);  // scroll-driven look target
+const _parallax   = new THREE.Vector2(0, 0);       // smoothed parallax offset
+const _parallaxT  = new THREE.Vector2(0, 0);       // parallax target
+const _mouseNDC   = new THREE.Vector2(0, 0);
+
+const clock = new THREE.Clock();
+let elapsed     = 0;     // accumulated, delta-clamped time
+let frameCount  = 0;
+let galaxyAngle = 0;     // accumulated spiral rotation (speed can ramp without jumps)
+
+// Scroll narrative state (written by ScrollTrigger, read in animate)
+const story = { p: 0 };
+
+// Palette (shared with shaders)
+const COL_BLUE   = new THREE.Color(0x2e7bff);
+const COL_PURPLE = new THREE.Color(0x8b5cf6);
+const COL_GOLD   = new THREE.Color(0xf0b35a);
+
+// ===================================================================
+// === SCENE ===  (terrain + orbiting lights)
+// ===================================================================
+
+// ---- Living terrain: 128x128 plane displaced by layered sine waves in GLSL ----
+const TERRAIN_SIZE = 170;
+
+const terrainUniforms = {
+  uTime:     { value: 0 },
+  uColorMix: { value: 0 },                               // 0 = volcanic, 1 = arctic
+  uL1Pos:    { value: new THREE.Vector3() },
+  uL2Pos:    { value: new THREE.Vector3() },
+  uL1Color:  { value: new THREE.Color(0xffb35c) },       // molten gold
+  uL2Color:  { value: new THREE.Color(0x3d7bff) },       // electric blue
+  uFogColor: { value: new THREE.Color(0x101a36) }
+};
+
+const terrainVert = /* glsl */`
+  uniform float uTime;
+  varying vec3 vWorldPos;
+  varying vec3 vNormal2;
+  varying float vHeight;
+
+  // Layered sine field — cheap, organic, alive. No noise textures, no Perlin.
+  float field(vec2 p, float t) {
+    float h = 0.0;
+    h += sin(p.x * 0.16 + t * 0.50) * 2.1;
+    h += sin(p.y * 0.21 - t * 0.34) * 1.9;
+    h += sin((p.x + p.y) * 0.105 + t * 0.21) * 2.9;
+    h += sin((p.x - p.y * 1.3) * 0.06 - t * 0.13) * 3.3;
+    h += sin(p.x * 0.47 - t * 0.85) * 0.55;
+    h += sin(p.y * 0.52 + t * 0.62) * 0.50;
+    h += sin((p.x * 0.74 - p.y * 0.61) + t * 1.15) * 0.28;
+    return h;
+  }
+
+  void main() {
+    vec3 pos = position;            // plane lies in local XY, rotated to XZ by the mesh
+    float e = 0.9;
+    float h  = field(pos.xy, uTime);
+    float hx = field(pos.xy + vec2(e, 0.0), uTime);
+    float hy = field(pos.xy + vec2(0.0, e), uTime);
+    pos.z += h;
+    vHeight = h;
+
+    // Finite-difference normal in local space, then to world space
+    vec3 nLocal = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 1.0));
+    vNormal2 = normalize(mat3(modelMatrix) * nLocal);
+
+    vec4 wp = modelMatrix * vec4(pos, 1.0);
+    vWorldPos = wp.xyz;
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`;
+
+const terrainFrag = /* glsl */`
+  precision highp float;
+  uniform float uColorMix;
+  uniform vec3 uL1Pos, uL2Pos, uL1Color, uL2Color, uFogColor;
+  varying vec3 vWorldPos;
+  varying vec3 vNormal2;
+  varying float vHeight;
+
+  // Capped-range point light: diffuse + Blinn-Phong specular, hard-faded at range
+  vec3 pointLight(vec3 lp, vec3 lc, vec3 n, vec3 p, vec3 viewDir, vec3 albedo) {
+    vec3 d = lp - p;
+    float dist = length(d);
+    vec3 L = d / max(dist, 0.001);
+    float atten = 1.0 / (1.0 + 0.038 * dist + 0.0062 * dist * dist);
+    atten *= smoothstep(52.0, 20.0, dist);            // hard range cap = no overdraw cost
+    float diff = max(dot(n, L), 0.0);
+    // Specular glints make every ridge read as a real surface
+    vec3 H = normalize(L + viewDir);
+    float spec = pow(max(dot(n, H), 0.0), 42.0);
+    return (albedo * lc * diff * 3.0 + lc * spec * 1.4) * atten;
+  }
+
+  void main() {
+    vec3 n = normalize(vNormal2);
+    vec3 viewDir = normalize(cameraPosition - vWorldPos);
+    float t = clamp(vHeight * 0.14 + 0.5, 0.0, 1.0);  // height ramp 0..1
+
+    // Volcanic ramp: charred crust -> magma orange -> molten gold
+    vec3 volcano = mix(vec3(0.10, 0.035, 0.030), vec3(0.96, 0.32, 0.07), smoothstep(0.25, 0.78, t));
+    volcano      = mix(volcano, vec3(1.0, 0.80, 0.42), smoothstep(0.82, 1.0, t));
+
+    // Arctic ramp: abyssal navy -> electric blue -> glacial white
+    vec3 arctic  = mix(vec3(0.045, 0.085, 0.20), vec3(0.20, 0.50, 1.0), smoothstep(0.22, 0.74, t));
+    arctic       = mix(arctic, vec3(0.90, 0.96, 1.0), smoothstep(0.84, 1.0, t));
+
+    vec3 base = mix(volcano, arctic, uColorMix);
+
+    // Self-glow in the valleys: magma seams / glacial lumens
+    vec3 seam = mix(vec3(1.0, 0.34, 0.06), vec3(0.28, 0.58, 1.0), uColorMix);
+    base += seam * smoothstep(0.30, 0.0, t) * 0.55;
+
+    // Hemisphere ambient: cool starlight from above, warm bounce from below.
+    // Tying ambient to the normal keeps depth even where the point lights don't reach.
+    vec3 skyAmb    = mix(vec3(0.34, 0.44, 0.72), vec3(0.46, 0.56, 0.80), uColorMix);
+    vec3 groundAmb = mix(vec3(0.30, 0.13, 0.07), vec3(0.10, 0.16, 0.32), uColorMix);
+    vec3 lit = base * mix(groundAmb, skyAmb, n.y * 0.5 + 0.5) * 1.15;
+
+    lit += pointLight(uL1Pos, uL1Color, n, vWorldPos, viewDir, base);
+    lit += pointLight(uL2Pos, uL2Color, n, vWorldPos, viewDir, base);
+
+    // Cool rim light on silhouette edges — lifts the terrain off the background
+    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.5);
+    lit += mix(vec3(0.35, 0.50, 1.0), vec3(0.55, 0.70, 1.0), uColorMix) * rim * 0.42;
+
+    // Distance haze into a luminous horizon (not pure black) — aerial perspective sells depth
+    float fog = smoothstep(50.0, 170.0, length(vWorldPos - cameraPosition));
+    lit = mix(lit, uFogColor, fog);
+
+    gl_FragColor = vec4(lit, 1.0);
+  }
+`;
+
+const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 128, 128); // 128x128 — no higher
+const terrainMat = new THREE.ShaderMaterial({
+  uniforms: terrainUniforms,
+  vertexShader: terrainVert,
+  fragmentShader: terrainFrag
+});
+const terrain = new THREE.Mesh(terrainGeo, terrainMat);
+terrain.rotation.x = -Math.PI / 2;
+scene.add(terrain);
+
+// ---- Two counter-orbiting light beacons (tiny additive spheres mark them) ----
+const beaconGeo = new THREE.SphereGeometry(0.75, 12, 10);
+const beacon1 = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({
+  color: 0xffc06a, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false
+}));
+const beacon2 = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({
+  color: 0x4d86ff, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false
+}));
+scene.add(beacon1, beacon2);
+
+// ===================================================================
+// === PARTICLES ===  (40k-point galaxy spiral + 8k-star skybox)
+// ===================================================================
+
+// ---- Galaxy spiral: ONE THREE.Points draw call, all math baked at init ----
+const GALAXY_RADIUS = 64;
+const galaxyGeo = new THREE.BufferGeometry();
+{
+  const positions = new Float32Array(GALAXY_COUNT * 3);
+  const seeds     = new Float32Array(GALAXY_COUNT);
+  const radii     = new Float32Array(GALAXY_COUNT);   // normalized radius -> color ramp
+  const scales    = new Float32Array(GALAXY_COUNT);
+  const ARMS = 3;
+
+  for (let i = 0; i < GALAXY_COUNT; i++) {
+    const r = Math.pow(Math.random(), 0.55) * GALAXY_RADIUS;
+    const arm = (i % ARMS) * ((Math.PI * 2) / ARMS);
+    const curl = r * 0.085;
+    const spread = (Math.random() + Math.random() + Math.random() - 1.5) * 0.42 * (1.0 - r / GALAXY_RADIUS * 0.55);
+    const a = arm + curl + spread;
+    const puff = Math.exp(-r / 30);
+    positions[i * 3 + 0] = Math.cos(a) * r;
+    positions[i * 3 + 1] = (Math.random() + Math.random() - 1) * (1.2 + 7.5 * puff);
+    positions[i * 3 + 2] = Math.sin(a) * r;
+    seeds[i]  = Math.random();
+    radii[i]  = r / GALAXY_RADIUS;
+    scales[i] = 0.5 + Math.random();
+  }
+  galaxyGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  galaxyGeo.setAttribute("aSeed",    new THREE.BufferAttribute(seeds, 1));
+  galaxyGeo.setAttribute("aRadius",  new THREE.BufferAttribute(radii, 1));
+  galaxyGeo.setAttribute("aScale",   new THREE.BufferAttribute(scales, 1));
+}
+
+const galaxyUniforms = {
+  uTime:  { value: 0 },
+  uAngle: { value: 0 },
+  uMouse: { value: new THREE.Vector2(10, 10) },  // NDC; parked off-screen until first move
+  uSize:  { value: 95 * PIXEL_RATIO },
+  uCore:  { value: COL_GOLD.clone() },
+  uMid:   { value: COL_PURPLE.clone() },
+  uRim:   { value: COL_BLUE.clone() },
+  uHot:   { value: new THREE.Color(0xfff3d6) }
+};
+
+const galaxyVert = /* glsl */`
+  attribute float aSeed;
+  attribute float aRadius;
+  attribute float aScale;
+  uniform float uTime, uAngle, uSize;
+  uniform vec2 uMouse;
+  varying float vRadius, vSeed, vGlow;
+
+  void main() {
+    vRadius = aRadius;
+    vSeed = aSeed;
+
+    // Differential rotation: the core leads, the rim trails — the spiral winds.
+    float ang = uAngle * (1.0 + (1.0 - aRadius) * 0.45);
+    float c = cos(ang), s = sin(ang);
+    vec3 p = position;
+    p.xz = mat2(c, -s, s, c) * p.xz;
+
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    gl_Position = projectionMatrix * mv;
+
+    // Brightness pulse lives in the seed; size breathes with it slightly.
+    float pulse = 0.85 + 0.3 * sin(uTime * 1.6 + aSeed * 6.2831);
+    gl_PointSize = aScale * uSize * pulse / max(-mv.z, 0.1);
+
+    // Mouse proximity in NDC space — nearby particles ignite.
+    vec2 ndc = gl_Position.xy / max(gl_Position.w, 0.0001);
+    vGlow = smoothstep(0.34, 0.02, distance(ndc, uMouse));
+  }
+`;
+
+const galaxyFrag = /* glsl */`
+  precision highp float;
+  uniform float uTime;
+  uniform vec3 uCore, uMid, uRim, uHot;
+  varying float vRadius, vSeed, vGlow;
+
+  void main() {
+    float d = length(gl_PointCoord - 0.5);
+    if (d > 0.5) discard;
+    float alpha = smoothstep(0.5, 0.06, d);
+
+    // Radius ramp: gold core -> purple midlands -> electric blue rim
+    vec3 col = mix(uCore, uMid, smoothstep(0.05, 0.42, vRadius));
+    col = mix(col, uRim, smoothstep(0.45, 1.0, vRadius));
+
+    // Fragment-shader brightness pulse
+    float pulse = 0.72 + 0.28 * sin(uTime * 2.1 + vSeed * 6.2831);
+
+    // Cursor ignition: shift hue toward white-gold and overdrive brightness
+    col = mix(col, uHot, vGlow * 0.85);
+    float bright = pulse * (1.0 + vGlow * 2.2);
+
+    gl_FragColor = vec4(col * bright, alpha * (0.5 + vGlow * 0.5));
+  }
+`;
+
+const galaxyMat = new THREE.ShaderMaterial({
+  uniforms: galaxyUniforms,
+  vertexShader: galaxyVert,
+  fragmentShader: galaxyFrag,
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
+});
+const galaxy = new THREE.Points(galaxyGeo, galaxyMat);  // Points, never InstancedMesh
+galaxy.position.set(0, 34, -85);
+galaxy.rotation.set(0.5, 0, 0.18);
+scene.add(galaxy);
+
+// ---- Procedural starfield skybox: one additive Points object, twinkle in-shader ----
+const starGeo = new THREE.BufferGeometry();
+{
+  const positions = new Float32Array(STAR_COUNT * 3);
+  const seeds     = new Float32Array(STAR_COUNT);
+  const speeds    = new Float32Array(STAR_COUNT);
+  const scales    = new Float32Array(STAR_COUNT);
+  for (let i = 0; i < STAR_COUNT; i++) {
+    // Uniform points on a far sphere shell
+    const u = Math.random() * 2 - 1;
+    const th = Math.random() * Math.PI * 2;
+    const rr = Math.sqrt(1 - u * u);
+    const R = 430 + Math.random() * 120;
+    positions[i * 3 + 0] = rr * Math.cos(th) * R;
+    positions[i * 3 + 1] = u * R;
+    positions[i * 3 + 2] = rr * Math.sin(th) * R;
+    seeds[i]  = Math.random();
+    speeds[i] = 0.5 + Math.random() * 2.4;
+    scales[i] = 0.6 + Math.random() * 1.4;
+  }
+  starGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  starGeo.setAttribute("aSeed",    new THREE.BufferAttribute(seeds, 1));
+  starGeo.setAttribute("aSpeed",   new THREE.BufferAttribute(speeds, 1));
+  starGeo.setAttribute("aScale",   new THREE.BufferAttribute(scales, 1));
+}
+
+const starUniforms = {
+  uTime: { value: 0 },
+  uSize: { value: 520 * PIXEL_RATIO }
+};
+
+const starVert = /* glsl */`
+  attribute float aSeed, aSpeed, aScale;
+  uniform float uTime, uSize;
+  varying float vTwinkle, vSeed;
+  void main() {
+    vec4 mv = modelViewMatrix * vec4(position, 1.0);
+    gl_Position = projectionMatrix * mv;
+    vTwinkle = 0.55 + 0.45 * sin(uTime * aSpeed + aSeed * 6.2831);
+    vSeed = aSeed;
+    gl_PointSize = aScale * uSize / max(-mv.z, 0.1);
+  }
+`;
+
+const starFrag = /* glsl */`
+  precision highp float;
+  varying float vTwinkle, vSeed;
+  void main() {
+    float d = length(gl_PointCoord - 0.5);
+    if (d > 0.5) discard;
+    float alpha = smoothstep(0.5, 0.0, d) * vTwinkle;
+    // A scattering of warm gold stars among cool blue-white ones
+    vec3 col = mix(vec3(0.78, 0.86, 1.0), vec3(1.0, 0.82, 0.55), step(0.86, vSeed));
+    gl_FragColor = vec4(col, alpha);
+  }
+`;
+
+const stars = new THREE.Points(starGeo, new THREE.ShaderMaterial({
+  uniforms: starUniforms,
+  vertexShader: starVert,
+  fragmentShader: starFrag,
+  transparent: true,
+  depthWrite: false,
+  blending: THREE.AdditiveBlending
+}));
+scene.add(stars);
+
+// ===================================================================
+// === PANELS ===  (holographic CanvasTexture readouts)
+// ===================================================================
+
+const panelVert = /* glsl */`
+  varying vec2 vUv;
+  varying vec3 vNormalW, vViewDir;
+  void main() {
+    vUv = uv;
+    vec4 wp = modelMatrix * vec4(position, 1.0);
+    vNormalW = normalize(mat3(modelMatrix) * normal);
+    vViewDir = normalize(cameraPosition - wp.xyz);
+    gl_Position = projectionMatrix * viewMatrix * wp;
+  }
+`;
+
+const panelFrag = /* glsl */`
+  precision highp float;
+  uniform sampler2D tMap;
+  uniform float uOpacity, uTime;
+  uniform vec3 uEdge;
+  varying vec2 vUv;
+  varying vec3 vNormalW, vViewDir;
+  void main() {
+    vec4 tex = texture2D(tMap, vUv);
+
+    // Fresnel-style rim: glow strengthens at grazing view angles
+    float fres = pow(1.0 - abs(dot(normalize(vViewDir), normalize(vNormalW))), 2.0);
+
+    // Hard UV edge glow — the hologram's frame
+    float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
+    float edge = 1.0 - smoothstep(0.0, 0.045, edgeDist);
+
+    // Faint rolling scan band inside the pane
+    float scan = 0.06 * sin(vUv.y * 90.0 - uTime * 3.0);
+
+    vec3 col = tex.rgb + uEdge * (edge * 0.9 + fres * 0.55) + scan;
+    float alpha = (tex.a * 0.78 + edge * 0.85 + fres * 0.25) * uOpacity;
+    gl_FragColor = vec4(col, alpha);
+  }
+`;
+
+const PANEL_DEFS = [
+  { id: "nav", title: "NAV // SURFACE LOCK",  pos: new THREE.Vector3(-15.5, 13.5,  2.0), edge: COL_BLUE   },
+  { id: "sig", title: "SIGNAL // UPLINK",     pos: new THREE.Vector3( 15.5, 15.0,  0.0), edge: COL_PURPLE },
+  { id: "osc", title: "OSC // AUDIO CORTEX",  pos: new THREE.Vector3(  0.0, 21.5, -9.0), edge: COL_GOLD   }
+];
+
+const panels = PANEL_DEFS.map((def) => {
+  const cv = document.createElement("canvas");
+  cv.width = 256; cv.height = 160;
+  const ctx = cv.getContext("2d");
+  const tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      tMap:     { value: tex },
+      uOpacity: { value: 0 },
+      uTime:    { value: 0 },
+      uEdge:    { value: def.edge.clone() }
+    },
+    vertexShader: panelVert,
+    fragmentShader: panelFrag,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 4.75), mat);
+  mesh.position.copy(def.pos);
+  mesh.visible = false;     // culled until the narrative fades it in (saves a draw call)
+  scene.add(mesh);
+  return { def, cv, ctx, tex, mat, mesh };
+});
+
+// Draw one panel's 2D canvas. Called for ONE panel per frame (each refreshes every 3rd frame).
+function drawPanel(p, t) {
+  const { ctx, cv, def } = p;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+
+  ctx.fillStyle = "rgba(8, 13, 32, 0.62)";
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  ctx.strokeStyle = "rgba(140, 175, 255, 0.5)";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(4.5, 4.5, cv.width - 9, cv.height - 9);
+
+  ctx.font = "11px 'Courier New', monospace";
+  ctx.fillStyle = "#cfe0ff";
+  ctx.fillText(def.title, 14, 24);
+  ctx.fillStyle = "rgba(140, 175, 255, 0.4)";
+  ctx.fillRect(14, 31, cv.width - 28, 1);
+
+  ctx.font = "12px 'Courier New', monospace";
+
+  if (def.id === "nav") {
+    // Fake drifting surface coordinates
+    ctx.fillStyle = "#9fc1ff";
+    ctx.fillText("LAT  " + (12.3 + Math.sin(t * 0.11) * 3.7).toFixed(4) + "\u00B0 N", 16, 58);
+    ctx.fillText("LON  " + (84.6 + Math.cos(t * 0.07) * 5.2).toFixed(4) + "\u00B0 W", 16, 80);
+    ctx.fillStyle = "#f0b35a";
+    ctx.fillText("ALT  " + (1840 + Math.sin(t * 0.23) * 260).toFixed(1) + " M", 16, 102);
+    ctx.fillStyle = "#8b5cf6";
+    ctx.fillText("DRIFT VECTOR  " + (Math.sin(t * 0.31) * 9).toFixed(2) + " M/S", 16, 124);
+    ctx.fillStyle = "rgba(46,123,255,0.9)";
+    ctx.fillRect(16, 138, 60 + 50 * (0.5 + 0.5 * Math.sin(t * 0.6)), 4);
+  } else if (def.id === "sig") {
+    // Signal strength bars
+    for (let i = 0; i < 12; i++) {
+      const h = 14 + 64 * Math.abs(Math.sin(t * 1.4 + i * 0.62));
+      const hot = h > 62;
+      ctx.fillStyle = hot ? "rgba(240,179,90,0.95)" : "rgba(139,92,246,0.85)";
+      ctx.fillRect(18 + i * 19, 130 - h, 12, h);
+    }
+    ctx.fillStyle = "#9fc1ff";
+    ctx.fillText("UPLINK " + (92 + Math.sin(t * 0.9) * 6).toFixed(1) + "%", 16, 150);
+  } else {
+    // Oscilloscope: live Tone.Analyser waveform if audio is running, else a carrier sine
+    ctx.strokeStyle = "#f0b35a";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    const wave = (audio.started && audio.analyser) ? audio.analyser.getValue() : null;
+    const N = 64;
+    for (let i = 0; i <= N; i++) {
+      const x = 16 + (i / N) * (cv.width - 32);
+      let v;
+      if (wave) {
+        v = wave[Math.min(wave.length - 1, Math.floor((i / N) * (wave.length - 1)))] * 2.2;
+      } else {
+        v = Math.sin(i * 0.45 + t * 4.0) * 0.5 * (0.6 + 0.4 * Math.sin(t * 0.8));
+      }
+      const y = 92 - v * 42;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.fillStyle = "#9fc1ff";
+    ctx.fillText(audio.started ? "CARRIER LOCKED" : "AWAITING INPUT", 16, 150);
+  }
+
+  p.tex.needsUpdate = true;
+}
+
+// ===================================================================
+// === POSTFX ===  (single fullscreen pass: chromatic aberration + grain)
+// ===================================================================
+// Render-target budget: exactly ONE (the scene buffer). No bloom, no PMREM.
+
+let renderTarget = new THREE.WebGLRenderTarget(
+  Math.floor(window.innerWidth * PIXEL_RATIO),
+  Math.floor(window.innerHeight * PIXEL_RATIO),
+  { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, depthBuffer: true, stencilBuffer: false }
+);
+
+const ABERRATION_BASE = 0.0016;
+const postUniforms = {
+  tDiffuse:    { value: renderTarget.texture },
+  uTime:       { value: 0 },
+  uAberration: { value: ABERRATION_BASE },
+  uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+};
+
+const postScene  = new THREE.Scene();
+const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const postQuad = new THREE.Mesh(
+  new THREE.PlaneGeometry(2, 2),
+  new THREE.ShaderMaterial({
+    uniforms: postUniforms,
+    depthTest: false,
+    depthWrite: false,
+    vertexShader: /* glsl */`
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = vec4(position.xy, 0.0, 1.0);
+      }
+    `,
+    fragmentShader: /* glsl */`
+      precision highp float;
+      uniform sampler2D tDiffuse;
+      uniform float uTime, uAberration;
+      uniform vec2 uResolution;
+      varying vec2 vUv;
+
+      float hash(vec2 p) {
+        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+      }
+
+      void main() {
+        vec2 dir = vUv - 0.5;
+        float dist = length(dir);
+
+        // Chromatic aberration — RGB channels splay outward from center
+        float ab = uAberration * (0.4 + dist * 2.2);
+        float r = texture2D(tDiffuse, vUv + dir * ab).r;
+        float g = texture2D(tDiffuse, vUv).g;
+        float b = texture2D(tDiffuse, vUv - dir * ab).b;
+        vec3 col = vec3(r, g, b);
+
+        // Gentle exposure lift — brightens mids without crushing the void
+        col = col * 1.18 + vec3(0.012, 0.015, 0.026);
+
+        // Subtle animated film grain
+        float grain = (hash(vUv * uResolution * 0.5 + fract(uTime) * 91.7) - 0.5) * 0.055;
+        col += grain;
+
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `
+  })
+);
+postQuad.frustumCulled = false;
+postScene.add(postQuad);
+
+// ===================================================================
+// === AUDIO ===  (Tone.js generative ambient engine, armed on first click)
+// ===================================================================
+
+const audio = { started: false, analyser: null };
+
+async function startAudio() {
+  if (audio.started) return;
+  audio.started = true;
+  try {
+    await Tone.start();
+
+    // Master shape: pad -> filter -> reverb -> delay -> panner -> out (+ analyser tap)
+    const panner   = new Tone.Panner(0);
+    const delay    = new Tone.FeedbackDelay({ delayTime: "4n.", feedback: 0.32, wet: 0.22 });
+    const reverb   = new Tone.Reverb({ decay: 9, wet: 0.38 });
+    const filter   = new Tone.Filter({ frequency: 700, type: "lowpass", rolloff: -24, Q: 0.8 });
+    const analyser = new Tone.Analyser("waveform", 128);
+    audio.analyser = analyser;
+
+    filter.connect(reverb);
+    reverb.connect(delay);
+    delay.connect(panner);
+    panner.toDestination();
+    panner.connect(analyser);
+
+    if (typeof reverb.generate === "function") reverb.generate();
+
+    // Droning pad: slow-breathing PolySynth chords
+    const pad = new Tone.PolySynth(Tone.Synth, {
+      maxPolyphony: 8,
+      volume: -14,
+      oscillator: { type: "fatsawtooth", count: 3, spread: 24 },
+      envelope: { attack: 3.5, decay: 1.0, sustain: 0.85, release: 7 }
+    }).connect(filter);
+
+    const CHORDS = [
+      ["C2", "G2", "D3", "A3"],
+      ["A1", "E2", "B2", "F#3"],
+      ["F1", "C2", "G2", "E3"],
+      ["G1", "D2", "A2", "E3"]
+    ];
+    let chordIndex = 0;
+    new Tone.Loop((time) => {
+      pad.triggerAttackRelease(CHORDS[chordIndex % CHORDS.length], "2m", time);
+      chordIndex++;
+    }, "2m").start(0);
+
+    // Subtle pulse every 2 beats — a sonar ping from the surface
+    const ping = new Tone.Synth({
+      volume: -22,
+      oscillator: { type: "sine" },
+      envelope: { attack: 0.004, decay: 0.32, sustain: 0, release: 0.25 }
+    }).connect(reverb);
+    let pingStep = 0;
+    new Tone.Loop((time) => {
+      ping.triggerAttackRelease(pingStep % 4 === 0 ? "G5" : "C5", "16n", time);
+      pingStep++;
+    }, "2n").start("4n");
+
+    // Click-triggered bass impact (shared with the aberration flash)
+    audio.bass = new Tone.MembraneSynth({
+      volume: -8,
+      pitchDecay: 0.09,
+      octaves: 5,
+      envelope: { attack: 0.002, decay: 0.7, sustain: 0, release: 0.5 }
+    }).connect(reverb);
+
+    // Slow modulation: filter cutoff and reverb wetness wander on LFOs
+    new Tone.LFO({ frequency: 0.045, min: 320, max: 1500 }).connect(filter.frequency).start();
+    new Tone.LFO({ frequency: 0.02, min: 0.22, max: 0.55 }).connect(reverb.wet).start();
+
+    // Stereo panning shifts gently with TIME (an LFO), never with the camera
+    new Tone.LFO({ frequency: 0.03, min: -0.45, max: 0.45 }).connect(panner.pan).start();
+
+    Tone.Transport.bpm.value = 64;
+    Tone.Transport.start();
+
+    document.getElementById("audio-hint").style.display = "none";
+  } catch (err) {
+    // Audio is garnish, never a blocker
+    console.warn("Audio cortex offline:", err);
+  }
+}
+
+function triggerBass() {
+  if (audio.started && audio.bass) {
+    try { audio.bass.triggerAttackRelease("C1", "8n"); } catch (e) { /* ignore */ }
+  }
+}
+
+// ===================================================================
+// === INTERACTIONS ===  (pointer parallax, click flash, scroll story)
+// ===================================================================
+
+window.addEventListener("mousemove", (e) => {
+  _mouseNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
+  _mouseNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
+  _parallaxT.set(_mouseNDC.x * 2.6, _mouseNDC.y * 1.3);
+  galaxyUniforms.uMouse.value.copy(_mouseNDC);
+}, { passive: true });
+
+window.addEventListener("click", () => {
+  startAudio();
+  triggerBass();
+  if (!REDUCED_MOTION) {
+    // 0.4s chromatic aberration flash
+    gsap.killTweensOf(postUniforms.uAberration);
+    gsap.timeline()
+      .to(postUniforms.uAberration, { value: 0.016, duration: 0.08, ease: "power2.out" })
+      .to(postUniforms.uAberration, { value: ABERRATION_BASE, duration: 0.32, ease: "power2.in" });
+  }
+});
+
+// Scroll-driven narrative: one scrubbed tween writes story.p, animate() reads it
+gsap.to(story, {
+  p: 1,
+  ease: "none",
+  scrollTrigger: {
+    trigger: ".scroll-space",
+    start: "top top",
+    end: "bottom bottom",
+    scrub: 0.7
+  }
+});
+
+// ===================================================================
+// === HUD ===  (CSS-layer telemetry + boot sequence)
+// ===================================================================
+
+const tLat = document.getElementById("t-lat");
+const tLon = document.getElementById("t-lon");
+const tAlt = document.getElementById("t-alt");
+const sigBars = Array.from(document.querySelectorAll("#sig-bars i"));
+const waveCanvas = document.getElementById("wave");
+const waveCtx = waveCanvas.getContext("2d");
+
+setInterval(() => {
+  const t = performance.now() * 0.001;
+  tLat.textContent = (12.3402 + Math.sin(t * 0.13) * 2.1).toFixed(5) + "\u00B0 N";
+  tLon.textContent = (84.6017 + Math.cos(t * 0.09) * 3.4).toFixed(5) + "\u00B0 W";
+  tAlt.textContent = (1840 + Math.sin(t * 0.21) * 240 + story.p * 5200).toFixed(1) + " M";
+  const sig = 0.55 + 0.45 * Math.sin(t * 0.7);
+  for (let i = 0; i < sigBars.length; i++) {
+    const on = (i / sigBars.length) < sig;
+    sigBars[i].style.height = (3 + i * 1.8) + "px";
+    sigBars[i].style.opacity = on ? "1" : "0.18";
+  }
+}, 140);
+
+// Corner-HUD waveform (drawn from animate(), throttled to every 3rd frame)
+function drawHudWave(t) {
+  const w = waveCanvas.width, h = waveCanvas.height;
+  waveCtx.clearRect(0, 0, w, h);
+  waveCtx.strokeStyle = "rgba(46, 123, 255, 0.95)";
+  waveCtx.lineWidth = 1.4;
+  waveCtx.beginPath();
+  const wave = (audio.started && audio.analyser) ? audio.analyser.getValue() : null;
+  const N = 60;
+  for (let i = 0; i <= N; i++) {
+    const x = (i / N) * w;
+    let v;
+    if (wave) {
+      v = wave[Math.min(wave.length - 1, Math.floor((i / N) * (wave.length - 1)))] * 2.4;
+    } else {
+      v = Math.sin(i * 0.5 + t * 3.2) * 0.35;
+    }
+    const y = h * 0.5 - v * h * 0.42;
+    if (i === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
+  }
+  waveCtx.stroke();
+}
+
+// Boot screen: terminal lines land one by one, then the curtain lifts
+(function boot() {
+  const lines = Array.from(document.querySelectorAll("#boot-inner .line"));
+  const step = REDUCED_MOTION ? 60 : 380;
+  lines.forEach((line, i) => {
+    setTimeout(() => line.classList.add("show"), 500 + i * step);
+  });
+  const total = 500 + lines.length * step + 700;
+  setTimeout(() => {
+    gsap.to("#boot", {
+      opacity: 0,
+      duration: 1.4,
+      ease: "power2.inOut",
+      onComplete: () => { document.getElementById("boot").style.display = "none"; }
+    });
+    document.getElementById("hud").classList.add("on");
+    document.getElementById("scroll-hint").classList.add("on");
+  }, total);
+})();
+
+// ===================================================================
+// === ANIMATE ===  (the one loop: clamped delta, zero allocations)
+// ===================================================================
+
+const BREATHE_AMP = REDUCED_MOTION ? 0 : 1;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  // Delta-time clamp: a hitching frame can never lurch the simulation
+  const dt = Math.min(clock.getDelta(), 0.05);
+  elapsed += dt;
+  frameCount++;
+  const p = story.p;
+
+  // ---- Scroll narrative, act I (0–33%): pull back from the surface ----
+  const act1 = Math.min(p / 0.33, 1);
+  const pull = act1 * act1 * (3 - 2 * act1); // smoothstep ease
+  _camBase.set(0, 7 + pull * 26, 19 + pull * 52);
+  _lookAt.set(0, 2.5 + pull * 3.5, 0);
+
+  // ---- Act II (33–66%): the planet freezes — volcanic to arctic ----
+  const act2 = Math.max(0, Math.min((p - 0.33) / 0.33, 1));
+  terrainUniforms.uColorMix.value = act2;
+  // The gold beacon cools toward ice-white as the planet freezes (no allocation)
+  terrainUniforms.uL1Color.value.setRGB(
+    1.0 - act2 * 0.35, 0.70 + act2 * 0.18, 0.36 + act2 * 0.55
+  );
+
+  // ---- Act III (66–100%): holograms wake, the galaxy spins up ----
+  const act3 = Math.max(0, Math.min((p - 0.66) / 0.34, 1));
+  for (let i = 0; i < panels.length; i++) {
+    const o = Math.max(0, Math.min(act3 * 3.4 - i * 1.05, 1));
+    panels[i].mat.uniforms.uOpacity.value = o;
+    panels[i].mesh.visible = o > 0.01;
+  }
+  const spinSpeed = 0.05 + act3 * 0.14;
+  galaxyAngle += dt * spinSpeed;            // accumulate — ramping speed never jumps
+
+  // ---- Camera: breathe (pure sine), parallax (lerp 0.05), compose ----
+  _parallax.x += (_parallaxT.x - _parallax.x) * 0.05;
+  _parallax.y += (_parallaxT.y - _parallax.y) * 0.05;
+  _camPos.set(
+    _camBase.x + Math.sin(elapsed * 0.26) * 1.1 * BREATHE_AMP + _parallax.x,
+    _camBase.y + Math.sin(elapsed * 0.41) * 0.65 * BREATHE_AMP + _parallax.y,
+    _camBase.z + Math.sin(elapsed * 0.19) * 0.8 * BREATHE_AMP
+  );
+  camera.position.copy(_camPos);
+  camera.lookAt(_lookAt);
+
+  // ---- Counter-orbiting point lights ----
+  const a1 = elapsed * 0.42, a2 = -elapsed * 0.31 + 2.1;
+  terrainUniforms.uL1Pos.value.set(Math.cos(a1) * 26, 9.5 + Math.sin(elapsed * 0.7) * 2.0, Math.sin(a1) * 26);
+  terrainUniforms.uL2Pos.value.set(Math.cos(a2) * 33, 13.0 + Math.cos(elapsed * 0.5) * 2.5, Math.sin(a2) * 33);
+  beacon1.position.copy(terrainUniforms.uL1Pos.value);
+  beacon2.position.copy(terrainUniforms.uL2Pos.value);
+
+  // ---- Shader clocks ----
+  terrainUniforms.uTime.value = elapsed;
+  galaxyUniforms.uTime.value  = elapsed;
+  galaxyUniforms.uAngle.value = galaxyAngle;
+  starUniforms.uTime.value    = elapsed;
+  postUniforms.uTime.value    = elapsed;
+
+  // ---- Throttle: one panel canvas per frame (each refreshes every 3rd frame) ----
+  const pi = frameCount % 3;
+  if (panels[pi].mesh.visible) {
+    drawPanel(panels[pi], elapsed);
+    panels[pi].mat.uniforms.uTime.value = elapsed;
+  }
+  panels[0].mesh.quaternion.copy(camera.quaternion);  // gentle billboarding
+  panels[1].mesh.quaternion.copy(camera.quaternion);
+  panels[2].mesh.quaternion.copy(camera.quaternion);
+  if (frameCount % 3 === 0) drawHudWave(elapsed);
+
+  // ---- Render: scene -> single RT -> fullscreen post quad -> screen ----
+  renderer.setRenderTarget(renderTarget);
+  renderer.render(scene, camera);
+  renderer.setRenderTarget(null);
+  renderer.render(postScene, postCamera);
+}
+animate();
+
+// ===================================================================
+// === RESIZE ===
+// ===================================================================
+
+window.addEventListener("resize", () => {
+  const w = window.innerWidth, h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  renderTarget.setSize(Math.floor(w * PIXEL_RATIO), Math.floor(h * PIXEL_RATIO));
+  postUniforms.uResolution.value.set(w, h);
+  ScrollTrigger.refresh();
+});
+</script>
+</body>
+</html>
