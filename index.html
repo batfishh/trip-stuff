@@ -481,6 +481,288 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
     }
+
+    /* ── CLICKABLE CARD HINT ── */
+    .t-card[data-day] {
+      cursor: pointer;
+    }
+    .t-card[data-day]::after {
+      content: 'tap for details';
+      position: absolute;
+      bottom: 8px;
+      right: 12px;
+      font-size: 8.5px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.38;
+      color: var(--text);
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .t-card[data-day]:hover::after { opacity: 0.6; }
+    /* Don't show hint on desktop hover when shimmer is more visible */
+    @media (hover: hover) {
+      .t-card[data-day]::after { content: 'click for details'; }
+    }
+
+    /* ── POPUP OVERLAY ── */
+    .popup-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 12, 4, 0.55);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .popup-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ── POPUP CARD ── */
+    .popup {
+      background: var(--cream);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 82vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      position: relative;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.28), 0 4px 16px rgba(0,0,0,0.12);
+      transform: translateY(24px) scale(0.96);
+      transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
+      opacity: 0;
+    }
+    .popup-overlay.open .popup {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* Popup header band */
+    .popup-header {
+      padding: 18px 20px 14px;
+      border-radius: 16px 16px 0 0;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .popup-header.amber { background: #fff4e8; }
+    .popup-header.green { background: #e4f2ea; }
+    .popup-header.gold  { background: #fdf5d8; }
+    .popup-header.slate { background: #eaf0f7; }
+
+    .popup-header-text { flex: 1; min-width: 0; }
+    .popup-eyebrow {
+      font-size: 8.5px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .popup-eyebrow.amber { color: #b06020; }
+    .popup-eyebrow.green { color: #1e5534; }
+    .popup-eyebrow.gold  { color: #8a6008; }
+    .popup-eyebrow.slate { color: #3a5878; }
+
+    .popup-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #140c04;
+      line-height: 1.2;
+    }
+
+    .popup-close {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(0,0,0,0.15);
+      background: rgba(255,255,255,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      color: #5a4030;
+      transition: background 0.2s ease, transform 0.2s ease;
+      margin-top: 2px;
+    }
+    .popup-close:hover { background: rgba(255,255,255,1); transform: scale(1.1) rotate(90deg); }
+
+    /* Popup body */
+    .popup-body {
+      padding: 16px 20px 20px;
+    }
+
+    /* Section blocks inside popup */
+    .popup-section {
+      margin-bottom: 16px;
+    }
+    .popup-section:last-child { margin-bottom: 0; }
+
+    .popup-section-label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      font-weight: 700;
+      color: #9a7450;
+      margin-bottom: 7px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid #e0d8cc;
+    }
+
+    /* Contact row */
+    .popup-contact {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #e8e0d4;
+      margin-bottom: 8px;
+    }
+    .popup-contact:last-child { margin-bottom: 0; }
+    .popup-contact-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+    .popup-contact-icon.whatsapp { background: #dcfce7; }
+    .popup-contact-icon.phone    { background: #fef3c7; }
+    .popup-contact-label {
+      font-size: 9px;
+      color: #9a7450;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+    .popup-contact-value {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1e140a;
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+    }
+    a.popup-contact { text-decoration: none; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    a.popup-contact:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+
+    /* Map link button */
+    .popup-map-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 14px;
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #e8e0d4;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin-bottom: 8px;
+    }
+    .popup-map-btn:last-child { margin-bottom: 0; }
+    .popup-map-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.1); }
+    .popup-map-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: #fce8e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .popup-map-label { font-size: 9px; color: #9a7450; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 1px; }
+    .popup-map-name  { font-size: 13px; font-weight: 600; color: #1e140a; }
+
+    /* Info rows (key→value list) */
+    .popup-info-list {
+      background: white;
+      border-radius: 10px;
+      border: 1px solid #e8e0d4;
+      overflow: hidden;
+    }
+    .popup-info-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 9px 14px;
+      border-bottom: 1px solid #f0ebe4;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .popup-info-row:last-child { border-bottom: none; }
+    .popup-info-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .popup-info-text { color: #3a2a18; }
+    .popup-info-text strong { color: #1e140a; font-weight: 600; display: block; font-size: 11px; margin-bottom: 1px; }
+
+    /* Things to do list */
+    .popup-todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .popup-todo-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      padding: 9px 13px;
+      background: white;
+      border-radius: 9px;
+      border: 1px solid #e8e0d4;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #3a2a18;
+    }
+    .popup-todo-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--amber);
+      flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .popup-todo-dot.green { background: var(--green); }
+
+    /* Alert/tip box */
+    .popup-tip {
+      display: flex;
+      gap: 10px;
+      padding: 10px 13px;
+      border-radius: 9px;
+      font-size: 11.5px;
+      line-height: 1.5;
+    }
+    .popup-tip.amber { background: #fff4e8; color: #6b3e18; border: 1px solid var(--amber-border); }
+    .popup-tip.green { background: var(--green-bg); color: #2a4030; border: 1px solid var(--green-border); }
+    .popup-tip.gold  { background: var(--gold-bg); color: #5a3e08; border: 1px solid var(--gold-border); }
+    .popup-tip.slate { background: var(--slate-bg); color: #2a3e50; border: 1px solid var(--slate-border); }
+    .popup-tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
   </style>
 </head>
 <body>
@@ -521,7 +803,7 @@
     <!-- ══ SEPT 17 · Thu · ARRIVAL ══ -->
     <div class="t-row">
       <div class="t-left-area">
-        <div class="t-card amber reveal from-left">
+        <div class="t-card amber reveal from-left" data-day="17">
           <div class="card-label amber">Thursday · Pre-Trek</div>
           <div class="card-title">Arrive at Rishikesh</div>
           <div class="card-desc amber">Evening Dehradun → bus to Rishikesh · Check into Live Free Hostel</div>
@@ -534,7 +816,7 @@
       </div>
       <div class="t-conn amber"></div>
       <div class="t-right-area">
-        <div class="t-card amber reveal from-right" data-mobile>
+        <div class="t-card amber reveal from-right" data-mobile data-day="17">
           <div class="card-label amber">Thursday · Pre-Trek</div>
           <div class="card-title">Arrive at Rishikesh</div>
           <div class="card-desc amber">Evening Dehradun → bus to Rishikesh · Check into Live Free Hostel</div>
@@ -556,7 +838,7 @@
       </div>
       <div class="t-conn amber"></div>
       <div class="t-right-area">
-        <div class="t-card amber reveal from-right">
+        <div class="t-card amber reveal from-right" data-day="18">
           <div class="card-label amber">Friday · Free Day</div>
           <div class="card-title">Chill in Rishikesh</div>
           <div class="card-desc amber">Pack gear · Rest · Early night before the trek begins</div>
@@ -571,7 +853,7 @@
     <!-- ══ SEPT 19 · Sat · TREK DAY 1 ══ -->
     <div class="t-row" style="min-height:92px">
       <div class="t-left-area">
-        <div class="t-card green reveal from-left">
+        <div class="t-card green reveal from-left" data-day="19">
           <div class="card-label green">Saturday · Trek Day 1</div>
           <div class="card-title">Drive to Base Camp</div>
           <div class="card-desc green">7:00 AM pickup from Live Free Hostel · 190 km to Sari · 7–8 hrs via Devprayag</div>
@@ -585,7 +867,7 @@
       </div>
       <div class="t-conn green"></div>
       <div class="t-right-area">
-        <div class="t-card green reveal from-right" data-mobile>
+        <div class="t-card green reveal from-right" data-mobile data-day="19">
           <div class="card-label green">Saturday · Trek Day 1</div>
           <div class="card-title">Drive to Base Camp</div>
           <div class="card-desc green">7:00 AM pickup from Live Free Hostel · 190 km to Sari · 7–8 hrs via Devprayag</div>
@@ -604,7 +886,7 @@
       </div>
       <div class="t-conn green"></div>
       <div class="t-right-area">
-        <div class="t-card green reveal from-right">
+        <div class="t-card green reveal from-right" data-day="20">
           <div class="card-label green">Sunday · Trek Day 2</div>
           <div class="card-title">Sari → Deoriatal</div>
           <div class="card-desc green">First trail day · Camp by the sacred lake · Chaukhamba reflection at sunset</div>
@@ -616,7 +898,7 @@
     <!-- ══ SEPT 21 · Mon · TREK DAY 3 ══ -->
     <div class="t-row" style="min-height:92px">
       <div class="t-left-area">
-        <div class="t-card green reveal from-left">
+        <div class="t-card green reveal from-left" data-day="21">
           <div class="card-label green">Monday · Trek Day 3</div>
           <div class="card-title">Deoriatal → Syalmi</div>
           <div class="card-desc green">Via Rohini Bugyal · Rhododendron forest · Foxes &amp; griffon sightings</div>
@@ -630,7 +912,7 @@
       </div>
       <div class="t-conn green"></div>
       <div class="t-right-area">
-        <div class="t-card green reveal from-right" data-mobile>
+        <div class="t-card green reveal from-right" data-mobile data-day="21">
           <div class="card-label green">Monday · Trek Day 3</div>
           <div class="card-title">Deoriatal → Syalmi</div>
           <div class="card-desc green">Via Rohini Bugyal · Rhododendron forest · Foxes &amp; griffon sightings</div>
@@ -649,7 +931,7 @@
       </div>
       <div class="t-conn green"></div>
       <div class="t-right-area">
-        <div class="t-card green reveal from-right">
+        <div class="t-card green reveal from-right" data-day="22">
           <div class="card-label green">Tuesday · Trek Day 4</div>
           <div class="card-title">Syalmi → Baniya Kund</div>
           <div class="card-desc green">Akashkamini river crossing · Alpine meadows · Final camp before summit</div>
@@ -661,7 +943,7 @@
     <!-- ══ SEPT 23 · Wed · SUMMIT ══ -->
     <div class="t-row" style="min-height:100px">
       <div class="t-left-area">
-        <div class="t-card gold reveal from-left">
+        <div class="t-card gold reveal from-left" data-day="23">
           <div class="card-label gold">Wednesday · Trek Day 5</div>
           <div class="card-title gold">△ Chandrashila Summit</div>
           <div class="card-desc gold">Via Tungnath temple · 360° Himalayan panorama · Drive back to Sari from Chopta</div>
@@ -675,7 +957,7 @@
       </div>
       <div class="t-conn gold"></div>
       <div class="t-right-area">
-        <div class="t-card gold reveal from-right" data-mobile>
+        <div class="t-card gold reveal from-right" data-mobile data-day="23">
           <div class="card-label gold">Wednesday · Trek Day 5</div>
           <div class="card-title gold">△ Chandrashila Summit</div>
           <div class="card-desc gold">Via Tungnath temple · 360° Himalayan panorama · Drive back to Sari from Chopta</div>
@@ -694,7 +976,7 @@
       </div>
       <div class="t-conn green"></div>
       <div class="t-right-area">
-        <div class="t-card green reveal from-right">
+        <div class="t-card green reveal from-right" data-day="24">
           <div class="card-label green">Thursday · Trek Day 6</div>
           <div class="card-title">Drive Back to Rishikesh</div>
           <div class="card-desc green">Sari → Rishikesh · 190 km · Arrive ~6 PM · Live Free Hostel · Rest &amp; celebrate</div>
@@ -710,7 +992,7 @@
     <!-- ══ SEPT 25 · Fri · DEPARTURE ══ -->
     <div class="t-row">
       <div class="t-left-area">
-        <div class="t-card slate reveal from-left">
+        <div class="t-card slate reveal from-left" data-day="25">
           <div class="card-label slate">Friday · Departure</div>
           <div class="card-title">Rest &amp; Fly to Bangalore</div>
           <div class="card-desc slate">Morning recovery in Rishikesh · Evening flight from Dehradun to Bangalore</div>
@@ -723,7 +1005,7 @@
       </div>
       <div class="t-conn slate"></div>
       <div class="t-right-area">
-        <div class="t-card slate reveal from-right" data-mobile>
+        <div class="t-card slate reveal from-right" data-mobile data-day="25">
           <div class="card-label slate">Friday · Departure</div>
           <div class="card-title">Rest &amp; Fly to Bangalore</div>
           <div class="card-desc slate">Morning recovery in Rishikesh · Evening flight from Dehradun to Bangalore</div>
@@ -740,6 +1022,20 @@
   </footer>
 
 </div><!-- /page -->
+
+<!-- ── POPUP OVERLAY ── -->
+<div class="popup-overlay" id="popupOverlay" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
+  <div class="popup" id="popup">
+    <div class="popup-header" id="popupHeader">
+      <div class="popup-header-text">
+        <div class="popup-eyebrow" id="popupEyebrow"></div>
+        <div class="popup-title" id="popupTitle"></div>
+      </div>
+      <button class="popup-close" id="popupClose" aria-label="Close">✕</button>
+    </div>
+    <div class="popup-body" id="popupBody"></div>
+  </div>
+</div>
 
 <script>
   const isMobile = () => window.innerWidth <= 640;
@@ -812,6 +1108,324 @@
     });
   }, { threshold: 0.2 });
   footerObs.observe(document.querySelector('.footer'));
+
+  // ═══════════════════════════════════════
+  // ── POPUP SYSTEM ──
+  // ═══════════════════════════════════════
+
+  const DAY_DATA = {
+    "17": {
+      theme: "amber",
+      eyebrow: "Thursday, 17 Sep · Pre-Trek",
+      title: "Arrive at Rishikesh",
+      sections: [
+        {
+          label: "📞 Transport Contact",
+          html: `
+            <a class="popup-contact" href="https://wa.me/919458310919" target="_blank" rel="noopener">
+              <div class="popup-contact-icon whatsapp">
+                <svg width="20" height="20" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="16" fill="#25D366"/><path d="M23.5 8.5A10.4 10.4 0 0 0 16 5.5C10.2 5.5 5.5 10.2 5.5 16c0 1.8.5 3.6 1.4 5.2L5.5 26.5l5.4-1.4A10.5 10.5 0 0 0 16 26.5c5.8 0 10.5-4.7 10.5-10.5 0-2.8-1.1-5.4-3-7.5zm-7.5 16.2c-1.6 0-3.1-.4-4.4-1.2l-.3-.2-3.2.8.9-3.1-.2-.3C7.9 19.2 7.5 17.6 7.5 16c0-4.7 3.8-8.5 8.5-8.5 2.3 0 4.4.9 6 2.5a8.5 8.5 0 0 1 2.5 6c0 4.7-3.8 8.5-8.5 8.5zm4.7-6.3c-.3-.1-1.6-.8-1.8-.9-.3-.1-.5-.1-.7.1s-.8 1-.9 1.1c-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4a8.7 8.7 0 0 1-1.6-2c-.2-.3 0-.5.1-.6l.4-.5.3-.4.1-.4-.9-2.3c-.2-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4c-.3.3-1.1 1.1-1.1 2.6s1.1 3 1.3 3.2c.2.2 2.2 3.3 5.3 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2.1-1.4.3-.7.3-1.3.2-1.4-.1-.1-.3-.2-.6-.3z" fill="white"/></svg>
+              </div>
+              <div>
+                <div class="popup-contact-label">WhatsApp · Dinesh Uncle (Cab)</div>
+                <div class="popup-contact-value">+91 94583 10919</div>
+              </div>
+            </a>
+            <a class="popup-contact" href="tel:+919458310919">
+              <div class="popup-contact-icon phone">📞</div>
+              <div>
+                <div class="popup-contact-label">Call directly</div>
+                <div class="popup-contact-value">+91 94583 10919</div>
+              </div>
+            </a>`
+        },
+        {
+          label: "📍 Where to go",
+          html: `
+            <a class="popup-map-btn" href="https://maps.app.goo.gl/TRU9GNbU2aJJjvS69" target="_blank" rel="noopener">
+              <div class="popup-map-icon">🗺️</div>
+              <div>
+                <div class="popup-map-label">Open in Google Maps</div>
+                <div class="popup-map-name">Live Free Hostel, Rishikesh</div>
+              </div>
+              <span style="margin-left:auto;font-size:12px;opacity:0.4">↗</span>
+            </a>`
+        },
+        {
+          label: "💡 Heads up",
+          html: `<div class="popup-tip amber"><span class="popup-tip-icon">🌙</span><span>You're arriving in the evening. Get to bed early — trek pickup is 7 AM on Sep 19.</span></div>`
+        }
+      ]
+    },
+
+    "18": {
+      theme: "amber",
+      eyebrow: "Friday, 18 Sep · Free Day",
+      title: "A Day in Rishikesh",
+      sections: [
+        {
+          label: "🎯 Things to do",
+          html: `<div class="popup-todo-list">
+            <div class="popup-todo-item"><div class="popup-todo-dot"></div><div><strong>Morning Ganga Aarti at Triveni Ghat</strong>Starts around sunrise (6 AM). A peaceful ritual on the riverbank — worth waking up for.</div></div>
+            <div class="popup-todo-item"><div class="popup-todo-dot"></div><div><strong>Rent a bicycle, explore the bridges</strong>Ram Jhula and Lakshman Jhula — cross both, grab chai at a dhaba on the other side.</div></div>
+            <div class="popup-todo-item"><div class="popup-todo-dot"></div><div><strong>Beatles Ashram (Chaurasi Kutia)</strong>Abandoned ashram where The Beatles stayed in 1968. ₹150 entry, great street art inside.</div></div>
+            <div class="popup-todo-item"><div class="popup-todo-dot"></div><div><strong>Kayaking or river rafting</strong>Short 2–3 hr rafting stretches available near Club House rapids. Book at the ghat.</div></div>
+            <div class="popup-todo-item"><div class="popup-todo-dot"></div><div><strong>Little Buddha Café for lunch</strong>Rooftop views, Israeli-Tibetan menu. Great for chilling and people-watching.</div></div>
+            <div class="popup-todo-item"><div class="popup-todo-dot"></div><div><strong>Pack your gear in the evening</strong>Lay everything out tonight — you're picked up at 7 AM tomorrow.</div></div>
+          </div>`
+        },
+        {
+          label: "💡 Reminder",
+          html: `<div class="popup-tip amber"><span class="popup-tip-icon">⚡</span><span>Charge all devices tonight. No charging points on trek from tomorrow.</span></div>`
+        }
+      ]
+    },
+
+    "19": {
+      theme: "green",
+      eyebrow: "Saturday, 19 Sep · Trek Day 1",
+      title: "Rishikesh → Sari Base Camp",
+      sections: [
+        {
+          label: "🚐 Transport",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">🕖</span><div class="popup-info-text"><strong>7:00 AM pickup</strong>From Live Free Hostel. Be ready with full backpack 10 mins early.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🛣️</span><div class="popup-info-text"><strong>Route</strong>Rishikesh → Devprayag → Rudraprayag → Ukhimath → Sari village. ~190 km.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">⏱️</span><div class="popup-info-text"><strong>Travel time</strong>7–8 hours. Expect winding mountain roads from Rudraprayag onwards.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🏕️</span><div class="popup-info-text"><strong>Arrival</strong>Indiahikes Community Campus, Sari village (6,560 ft). Dinner included tonight.</div></div>
+            </div>`
+        },
+        {
+          label: "💡 Tips",
+          html: `<div class="popup-tip green"><span class="popup-tip-icon">🎒</span><span>Keep essentials (snacks, water, motion sickness tabs if needed) in a small bag, not the main pack — it'll be in the vehicle boot.</span></div>`
+        }
+      ]
+    },
+
+    "20": {
+      theme: "green",
+      eyebrow: "Sunday, 20 Sep · Trek Day 2",
+      title: "Sari → Deoriatal Lake",
+      sections: [
+        {
+          label: "📍 Trail details",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">📏</span><div class="popup-info-text"><strong>Distance</strong>4.1 km · ~2.5–3 hours of walking</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">⛰️</span><div class="popup-info-text"><strong>Altitude gain</strong>Sari (6,560 ft) → Deoriatal (7,810 ft) · +1,250 ft gain</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🌲</span><div class="popup-info-text"><strong>Terrain</strong>Steep switchbacks through oak and rhododendron forest. Trail well-marked.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🏕️</span><div class="popup-info-text"><strong>Camp</strong>Deoriatal Lake campsite. All meals and tents provided by Indiahikes.</div></div>
+            </div>`
+        },
+        {
+          label: "✨ Highlight",
+          html: `<div class="popup-tip green"><span class="popup-tip-icon">🏔️</span><span>Walk to the lake shore just before sunset — Mt. Chaukhamba (7,138 m) reflects perfectly in the still water on clear evenings.</span></div>`
+        }
+      ]
+    },
+
+    "21": {
+      theme: "green",
+      eyebrow: "Monday, 21 Sep · Trek Day 3",
+      title: "Deoriatal → Syalmi",
+      sections: [
+        {
+          label: "📍 Trail details",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">📏</span><div class="popup-info-text"><strong>Distance</strong>9.1 km · 6–7 hours of walking</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">⛰️</span><div class="popup-info-text"><strong>Altitude</strong>Deoriatal (7,810 ft) → Syalmi (~7,500 ft) · Undulating through forest and meadows</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🌿</span><div class="popup-info-text"><strong>Via</strong>Rohini Bugyal — a sudden open meadow hidden in dense forest. One of the best surprises of the trek.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🦊</span><div class="popup-info-text"><strong>Wildlife</strong>Himalayan foxes and griffon vultures often spotted in this section.</div></div>
+            </div>`
+        },
+        {
+          label: "💡 Tips",
+          html: `<div class="popup-tip green"><span class="popup-tip-icon">💧</span><span>This is the longest walking day. Start well-hydrated and carry at least 2 litres of water from camp.</span></div>`
+        }
+      ]
+    },
+
+    "22": {
+      theme: "green",
+      eyebrow: "Tuesday, 22 Sep · Trek Day 4",
+      title: "Syalmi → Baniya Kund",
+      sections: [
+        {
+          label: "📍 Trail details",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">📏</span><div class="popup-info-text"><strong>Distance</strong>5.4 km · ~3–4 hours</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">⛰️</span><div class="popup-info-text"><strong>Altitude</strong>Syalmi (~7,500 ft) → Baniya Kund (8,520 ft) · Steady climb</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🏞️</span><div class="popup-info-text"><strong>Terrain</strong>Forest gives way to open alpine meadows. The Akashkamini stream runs alongside the trail.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🌄</span><div class="popup-info-text"><strong>Camp</strong>Baniya Kund — the final camp before summit day. Great views of Chandrashila from here.</div></div>
+            </div>`
+        },
+        {
+          label: "⚠️ Summit prep",
+          html: `<div class="popup-tip green"><span class="popup-tip-icon">🌙</span><span>Eat well tonight and sleep by 9 PM. Summit push starts very early tomorrow — around 3–4 AM.</span></div>`
+        }
+      ]
+    },
+
+    "23": {
+      theme: "gold",
+      eyebrow: "Wednesday, 23 Sep · Summit Day",
+      title: "△ Chandrashila Summit",
+      sections: [
+        {
+          label: "🏔️ Summit details",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">🌅</span><div class="popup-info-text"><strong>Start time</strong>~3:30–4:00 AM from Baniya Kund. Headlamps required.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">📏</span><div class="popup-info-text"><strong>Distance</strong>13 km total (summit + descent) · 5–6 hours</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">📐</span><div class="popup-info-text"><strong>Altitude</strong>Baniya Kund (8,520 ft) → Chandrashila (12,083 ft) → back via Chopta</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🛕</span><div class="popup-info-text"><strong>Via Tungnath</strong>Pass through Tungnath temple (3,680 m) — the highest Shiva temple in the world.</div></div>
+            </div>`
+        },
+        {
+          label: "🌄 The view from the top",
+          html: `<div class="popup-tip gold"><span class="popup-tip-icon">✨</span><span>Nearly 20 Himalayan peaks visible from the summit: Chaukhamba, Nanda Devi, Trishul, Kedarnath, and the full Gangotri range. Aim for sunrise.</span></div>`
+        },
+        {
+          label: "🚐 After summit",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">🏁</span><div class="popup-info-text"><strong>Descent</strong>Trek down to Chopta (not back to Baniya Kund). Vehicle waits at Chopta.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🛣️</span><div class="popup-info-text"><strong>Drive</strong>Chopta → back to Sari base camp for the final night.</div></div>
+            </div>`
+        }
+      ]
+    },
+
+    "24": {
+      theme: "green",
+      eyebrow: "Thursday, 24 Sep · Trek Day 6",
+      title: "Drive Back to Rishikesh",
+      sections: [
+        {
+          label: "🚐 Journey",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">🛣️</span><div class="popup-info-text"><strong>Route</strong>Sari village → Rudraprayag → Devprayag → Rishikesh. ~190 km.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🕕</span><div class="popup-info-text"><strong>Expected drop-off</strong>~6:00 PM at Live Free Hostel, Rishikesh</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🍽️</span><div class="popup-info-text"><strong>Meals on trek</strong>Breakfast and lunch at Sari campus are your last included meals.</div></div>
+            </div>`
+        },
+        {
+          label: "📍 Your stay tonight",
+          html: `
+            <a class="popup-map-btn" href="https://maps.app.goo.gl/TRU9GNbU2aJJjvS69" target="_blank" rel="noopener">
+              <div class="popup-map-icon">🗺️</div>
+              <div>
+                <div class="popup-map-label">Open in Google Maps</div>
+                <div class="popup-map-name">Live Free Hostel, Rishikesh</div>
+              </div>
+              <span style="margin-left:auto;font-size:12px;opacity:0.4">↗</span>
+            </a>`
+        },
+        {
+          label: "🎉 Tonight",
+          html: `<div class="popup-tip green"><span class="popup-tip-icon">🍺</span><span>You've summited Chandrashila! Tonight is for rest, food, and sharing stories. Rishikesh has great cafés and restaurants near the ghats.</span></div>`
+        }
+      ]
+    },
+
+    "25": {
+      theme: "slate",
+      eyebrow: "Friday, 25 Sep · Departure Day",
+      title: "Rest & Fly to Bangalore",
+      sections: [
+        {
+          label: "✈️ Departure",
+          html: `
+            <div class="popup-info-list">
+              <div class="popup-info-row"><span class="popup-info-icon">🏨</span><div class="popup-info-text"><strong>Morning</strong>Rest at Live Free Hostel. Check-out time varies — confirm with hostel.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">🚗</span><div class="popup-info-text"><strong>To airport</strong>Rishikesh → Jolly Grant Airport (Dehradun), ~22 km, ~45 min by cab.</div></div>
+              <div class="popup-info-row"><span class="popup-info-icon">✈️</span><div class="popup-info-text"><strong>Flight</strong>Evening departure from Dehradun (DED) to Bangalore (BLR). Check your ticket for exact time.</div></div>
+            </div>`
+        },
+        {
+          label: "📍 Jolly Grant Airport",
+          html: `
+            <a class="popup-map-btn" href="https://maps.app.goo.gl/J9p7s3VPW6G6mYKD9" target="_blank" rel="noopener">
+              <div class="popup-map-icon">✈️</div>
+              <div>
+                <div class="popup-map-label">Open in Google Maps</div>
+                <div class="popup-map-name">Jolly Grant Airport, Dehradun (DED)</div>
+              </div>
+              <span style="margin-left:auto;font-size:12px;opacity:0.4">↗</span>
+            </a>`
+        },
+        {
+          label: "💡 Heads up",
+          html: `<div class="popup-tip slate"><span class="popup-tip-icon">⏰</span><span>Book your cab to the airport well in advance — leave at least 2.5 hours before departure given the drive and security time.</span></div>`
+        }
+      ]
+    }
+  };
+
+  // ── Popup open/close logic ──
+  const overlay  = document.getElementById('popupOverlay');
+  const popup    = document.getElementById('popup');
+  const pHeader  = document.getElementById('popupHeader');
+  const pEyebrow = document.getElementById('popupEyebrow');
+  const pTitle   = document.getElementById('popupTitle');
+  const pBody    = document.getElementById('popupBody');
+  const pClose   = document.getElementById('popupClose');
+
+  function openPopup(day) {
+    const data = DAY_DATA[day];
+    if (!data) return;
+
+    // Set theme
+    pHeader.className  = `popup-header ${data.theme}`;
+    pEyebrow.className = `popup-eyebrow ${data.theme}`;
+    pEyebrow.textContent = data.eyebrow;
+    pTitle.textContent   = data.title;
+
+    // Build body HTML
+    let bodyHTML = '';
+    data.sections.forEach(sec => {
+      bodyHTML += `<div class="popup-section">
+        <div class="popup-section-label">${sec.label}</div>
+        ${sec.html}
+      </div>`;
+    });
+    pBody.innerHTML = bodyHTML;
+
+    // Show
+    popup.scrollTop = 0;
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Focus close button for accessibility
+    setTimeout(() => pClose.focus(), 350);
+  }
+
+  function closePopup() {
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Delegate click on cards
+  document.addEventListener('click', (e) => {
+    const card = e.target.closest('.t-card[data-day]');
+    if (card) {
+      // On desktop, avoid firing for the hidden mobile-duplicate
+      if (card.style.display === 'none') return;
+      openPopup(card.dataset.day);
+    }
+  });
+
+  pClose.addEventListener('click', closePopup);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closePopup();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closePopup();
+  });
 </script>
 </body>
 </html>
