@@ -1,1102 +1,817 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DEEP FIELD // KEPLER-442b</title>
-<style>
-  /* ============================================================
-     DEEP FIELD — cinematic overlay styles
-     Palette: void navy #04060f / electric blue #2e7bff
-              signal purple #8b5cf6 / instrument gold #f0b35a
-     ============================================================ */
-  :root {
-    --blue:   #2e7bff;
-    --purple: #8b5cf6;
-    --gold:   #f0b35a;
-    --ink:    #04060f;
-    --hud:    rgba(180, 205, 255, 0.85);
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deoriatal Chandrashila Trek · September 2026</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #ede8de;
+      --amber: #c87a38;
+      --amber-bg: #fff8f0;
+      --amber-border: #f0c090;
+      --green: #2a5e40;
+      --green-bg: #e8f4ed;
+      --green-border: #80c4a0;
+      --green-tag: #b8e0c8;
+      --gold: #c9920a;
+      --gold-bg: #fdf7df;
+      --gold-border: #d4ae30;
+      --slate: #4a6b8a;
+      --slate-bg: #ecf2f8;
+      --slate-border: #98b8d0;
+      --text: #1e140a;
+      --text-muted: #7a5830;
+      --spine-w: 2px;
+    }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-  html, body {
-    background: var(--ink);
-    overflow-x: hidden;
-    font-family: "Courier New", ui-monospace, Menlo, Consolas, monospace;
-  }
+    body {
+      background: var(--cream);
+      font-family: 'Jost', sans-serif;
+      color: var(--text);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
 
-  /* invisible scroll runway underneath the fixed canvas */
-  .scroll-space { height: 420vh; width: 100%; pointer-events: none; }
+    /* Subtle grain overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9000;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
 
-  #scene {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    display: block;
-    z-index: 0;
-  }
+    /* ── PAGE WRAPPER ── */
+    .page {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
 
-  /* ---------- overlay stack ---------- */
-  .overlay { position: fixed; inset: 0; pointer-events: none; }
+    /* ── HEADER ── */
+    .header {
+      text-align: center;
+      margin-bottom: 52px;
+    }
 
-  #scanlines {
-    z-index: 4;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(160, 200, 255, 0.5) 0px,
-      rgba(160, 200, 255, 0.5) 1px,
-      transparent 1px,
-      transparent 4px
-    );
-    opacity: 0.02;
-    mix-blend-mode: screen;
-  }
+    .mountain-wrap {
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
 
-  #vignette {
-    z-index: 5;
-    background: radial-gradient(
-      ellipse at center,
-      transparent 50%,
-      rgba(3, 5, 14, 0.30) 80%,
-      rgba(2, 4, 10, 0.68) 100%
-    );
-  }
+    .mountain-svg {
+      width: 100%;
+      max-width: 560px;
+      display: block;
+      margin: 0 auto;
+      transform: translateY(16px) scale(1.06);
+      opacity: 0;
+      transition: transform 1.3s cubic-bezier(0.22,1,0.36,1), opacity 1.3s ease;
+    }
+    .mountain-svg.visible { transform: translateY(0) scale(1); opacity: 1; }
 
-  /* ---------- corner HUD ---------- */
-  #hud {
-    position: fixed;
-    top: 22px;
-    left: 24px;
-    z-index: 6;
-    pointer-events: none;
-    color: var(--hud);
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    line-height: 1.75;
-    text-shadow: 0 0 8px rgba(46, 123, 255, 0.45);
-    opacity: 0;
-    transition: opacity 1.4s ease;
-  }
-  #hud.on { opacity: 1; }
+    /* Animated snow cap */
+    .snow-cap {
+      opacity: 0;
+      transition: opacity 0.8s ease 0.9s;
+    }
+    .mountain-svg.visible .snow-cap { opacity: 1; }
 
-  #hud .feed {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    color: #cfe0ff;
-    margin-bottom: 6px;
-    font-size: 12px;
-  }
+    .header-eyebrow {
+      font-size: 10px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #9a7450;
+      margin-bottom: 10px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s;
+    }
+    .header-eyebrow.visible { opacity: 1; transform: none; }
 
-  #status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--gold);
-    box-shadow: 0 0 10px var(--gold);
-    animation: blink 1.6s steps(1) infinite;
-  }
-  @keyframes blink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.15; } }
+    .header-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(26px, 6vw, 42px);
+      color: #140c04;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.8s ease 0.55s, transform 0.8s ease 0.55s;
+    }
+    .header-title.visible { opacity: 1; transform: none; }
 
-  #hud .row span:first-child { color: rgba(140, 165, 215, 0.65); margin-right: 8px; }
-  #hud .val { color: #e8f0ff; }
-  #hud .val.gold { color: var(--gold); }
+    .header-sub {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 24px;
+      letter-spacing: 0.3px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.7s ease 0.7s, transform 0.7s ease 0.7s;
+    }
+    .header-sub.visible { opacity: 1; transform: none; }
 
-  #sig-bars { display: inline-flex; gap: 3px; align-items: flex-end; height: 12px; vertical-align: middle; }
-  #sig-bars i {
-    display: block;
-    width: 4px;
-    background: var(--blue);
-    box-shadow: 0 0 6px rgba(46, 123, 255, 0.8);
-    transition: height 0.25s ease, opacity 0.25s ease;
-  }
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.7s ease 0.9s, transform 0.7s ease 0.9s;
+    }
+    .legend.visible { opacity: 1; transform: none; }
 
-  #wave {
-    display: block;
-    margin-top: 10px;
-    width: 190px;
-    height: 44px;
-    border: 1px solid rgba(46, 123, 255, 0.25);
-    background: rgba(8, 14, 34, 0.35);
-  }
+    .pill {
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-size: 10.5px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      border: 1.5px solid;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .pill-amber { background: #fff4e8; border-color: var(--amber-border); color: #a05520; }
+    .pill-green { background: var(--green-bg); border-color: var(--green-border); color: #1e5534; }
+    .pill-gold  { background: var(--gold-bg);  border-color: var(--gold-border);  color: #7a5808; }
+    .pill-slate { background: var(--slate-bg); border-color: var(--slate-border); color: #3a5878; }
 
-  #audio-hint {
-    margin-top: 8px;
-    color: var(--gold);
-    opacity: 0.85;
-    animation: blink 2.2s steps(1) infinite;
-  }
+    /* ── TIMELINE ── */
+    .timeline {
+      position: relative;
+    }
 
-  #scroll-hint {
-    position: fixed;
-    bottom: 26px;
-    right: 30px;
-    z-index: 6;
-    pointer-events: none;
-    color: rgba(170, 195, 245, 0.7);
-    font-size: 11px;
-    letter-spacing: 0.3em;
-    text-shadow: 0 0 8px rgba(46, 123, 255, 0.4);
-    animation: drift 3s ease-in-out infinite;
-    opacity: 0;
-    transition: opacity 1.4s ease;
-  }
-  #scroll-hint.on { opacity: 1; }
-  @keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(7px); } }
+    /* Spine — now on left for mobile, centered for desktop */
+    .spine {
+      position: absolute;
+      top: 24px;
+      width: var(--spine-w);
+      height: 0;
+      background: linear-gradient(180deg, var(--amber) 0%, var(--green) 28%, var(--green) 76%, var(--slate) 100%);
+      opacity: 0.25;
+      transition: height 2.2s cubic-bezier(0.4,0,0.2,1) 0.3s;
+      z-index: 0;
+      /* Desktop: centered */
+      left: 50%;
+      transform: translateX(-1px);
+    }
+    .spine.grown { height: calc(100% - 48px); }
 
-  /* ---------- boot screen ---------- */
-  #boot {
-    position: fixed;
-    inset: 0;
-    z-index: 9;
-    background: var(--ink);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #boot-inner {
-    width: min(560px, 86vw);
-    color: #9fc1ff;
-    font-size: 13px;
-    letter-spacing: 0.1em;
-    line-height: 2.1;
-    text-shadow: 0 0 10px rgba(46, 123, 255, 0.5);
-  }
-  #boot-inner .line { opacity: 0; white-space: nowrap; overflow: hidden; }
-  #boot-inner .line.show { opacity: 1; }
-  #boot-inner .ok { color: var(--gold); }
-  #caret {
-    display: inline-block;
-    width: 8px; height: 14px;
-    background: var(--blue);
-    vertical-align: -2px;
-    animation: blink 0.9s steps(1) infinite;
-  }
+    /* ── NODE ROWS — desktop alternating layout ── */
+    .t-row {
+      display: flex;
+      align-items: center;
+      min-height: 80px;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .t-row:last-child { margin-bottom: 0; }
 
-  @media (prefers-reduced-motion: reduce) {
-    #scroll-hint, #status-dot, #audio-hint, #caret { animation: none; }
-  }
-</style>
+    .t-left-area, .t-right-area { flex: 1; }
+    .t-left-area { display: flex; justify-content: flex-end; padding-right: 0; }
+    .t-right-area { display: flex; justify-content: flex-start; padding-left: 0; }
+
+    .t-conn {
+      width: 22px;
+      height: 2px;
+      flex-shrink: 0;
+      opacity: 0.35;
+      transition: opacity 0.4s ease;
+    }
+    .t-conn.amber { background: var(--amber); }
+    .t-conn.green { background: var(--green); }
+    .t-conn.gold  { background: var(--gold); opacity: 0.5; }
+    .t-conn.slate { background: var(--slate); }
+    .t-conn.ghost { visibility: hidden; }
+
+    /* Node circles */
+    .t-node {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid var(--cream);
+      position: relative;
+      z-index: 2;
+      cursor: default;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease;
+      will-change: transform;
+    }
+    .t-node:hover { transform: scale(1.15) rotate(-3deg); }
+    .t-node.amber { background: var(--amber);  box-shadow: 0 2px 14px rgba(200,122,56,0.3); }
+    .t-node.green { background: var(--green);  box-shadow: 0 2px 14px rgba(42,94,64,0.3); }
+    .t-node.slate { background: var(--slate);  box-shadow: 0 2px 14px rgba(74,107,138,0.3); }
+    .t-node.gold  {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(140deg, #d4a820, #b07a08);
+      box-shadow: 0 4px 20px rgba(212,168,32,0.4);
+      animation: goldPulse 2.8s ease-in-out infinite;
+    }
+    .t-node.gold:hover { transform: scale(1.18) rotate(3deg); }
+
+    @keyframes goldPulse {
+      0%,100% { box-shadow: 0 4px 20px rgba(212,168,32,0.4); }
+      50%      { box-shadow: 0 4px 36px rgba(212,168,32,0.7), 0 0 0 7px rgba(212,168,32,0.1); }
+    }
+
+    .t-node-date {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      line-height: 1;
+    }
+    .t-node-month {
+      font-size: 7px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.8);
+      letter-spacing: 1.5px;
+      line-height: 1;
+    }
+
+    /* Cards */
+    .t-card {
+      border-radius: 12px;
+      padding: 14px 17px;
+      width: calc(100% - 26px);
+      max-width: 320px;
+      transition: transform 0.25s cubic-bezier(0.34,1.3,0.64,1), box-shadow 0.25s ease;
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Shimmer on hover */
+    .t-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+      transform: translateX(-100%);
+      transition: transform 0.5s ease;
+      pointer-events: none;
+    }
+    .t-card:hover::before { transform: translateX(100%); }
+    .t-card:hover {
+      transform: translateY(-4px) scale(1.01);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+    }
+
+    .t-left-area .t-card { border-left: 4px solid; }
+    .t-right-area .t-card { border-right: 4px solid; }
+
+    .t-card.amber {
+      background: var(--amber-bg);
+      border-color: var(--amber);
+      outline: 1px solid var(--amber-border);
+    }
+    .t-card.green {
+      background: var(--green-bg);
+      border-color: var(--green);
+      outline: 1px solid var(--green-border);
+    }
+    .t-card.gold {
+      background: var(--gold-bg);
+      border-color: var(--gold);
+      outline: 2px solid var(--gold-border);
+      box-shadow: 0 4px 20px rgba(180,150,20,0.13);
+    }
+    .t-card.slate {
+      background: var(--slate-bg);
+      border-color: var(--slate);
+      outline: 1px solid var(--slate-border);
+    }
+
+    /* Right-side cards flip the accent border */
+    .t-right-area .t-card.amber { border-left: 1px solid var(--amber-border); border-right: 4px solid var(--amber); }
+    .t-right-area .t-card.green { border-left: 1px solid var(--green-border); border-right: 4px solid var(--green); }
+    .t-right-area .t-card.gold  { border-left: 1px solid var(--gold-border);  border-right: 4px solid var(--gold); }
+    .t-right-area .t-card.slate { border-left: 1px solid var(--slate-border); border-right: 4px solid var(--slate); }
+
+    .card-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+    .card-label.amber { color: #b06020; }
+    .card-label.green { color: #1e5534; }
+    .card-label.gold  { color: #8a6008; }
+    .card-label.slate { color: #3a5878; }
+
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 17px;
+      color: #140c04;
+      font-weight: 700;
+      margin-bottom: 3px;
+      line-height: 1.2;
+    }
+    .card-title.gold { font-size: 18px; }
+
+    .card-desc {
+      font-size: 11.5px;
+      line-height: 1.6;
+    }
+    .card-desc.amber { color: #6b4828; }
+    .card-desc.green { color: #2e4e38; }
+    .card-desc.gold  { color: #5a4008; }
+    .card-desc.slate { color: #3a5060; }
+
+    .card-tags {
+      display: flex;
+      gap: 5px;
+      margin-top: 9px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      border-radius: 10px;
+      padding: 2px 9px;
+      font-size: 9.5px;
+      font-weight: 600;
+      transition: transform 0.2s ease;
+    }
+    .tag:hover { transform: scale(1.05); }
+    .tag.green { background: var(--green-tag); color: #1e4028; }
+    .tag.gold  { background: #f0d870; color: #5a3a00; }
+
+    /* ── SLEEP MARKERS ── */
+    .sleep-marker {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 30px;
+      margin: -2px 0;
+      position: relative;
+      z-index: 1;
+    }
+    .sleep-pill {
+      background: #fef5e8;
+      border: 1px solid #e0b870;
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 9px;
+      color: #8a6020;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      transition: transform 0.2s ease;
+    }
+    .sleep-pill:hover { transform: scale(1.04); }
+
+    /* ── REVEAL ANIMATIONS ── */
+    .reveal {
+      opacity: 0;
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.22,1,0.36,1);
+    }
+    .reveal.from-left  { transform: translateX(-32px); }
+    .reveal.from-right { transform: translateX(32px); }
+    .reveal.from-below { transform: translateY(18px); }
+    .reveal.visible    { opacity: 1 !important; transform: none !important; }
+
+    /* ── FOOTER ── */
+    .footer {
+      text-align: center;
+      margin-top: 48px;
+      padding-top: 22px;
+      border-top: 1px solid #d8d0c4;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+    .footer.visible { opacity: 1; transform: none; }
+    .footer-main { font-size: 11px; color: #9a7450; letter-spacing: 0.3px; }
+    .footer-main strong { color: var(--green); }
+    .footer-note { font-size: 10px; color: #b89a70; margin-top: 5px; font-style: italic; }
+
+    /* ═══════════════════════════════════════════
+       ── MOBILE LAYOUT ──
+       Single column, nodes on left edge, cards expand right
+    ════════════════════════════════════════════ */
+    @media (max-width: 640px) {
+      .page { padding: 28px 16px 52px; }
+
+      /* Move spine to left edge */
+      .spine {
+        left: 24px;
+        transform: none;
+      }
+
+      /* Row becomes a simple left-aligned row */
+      .t-row {
+        flex-direction: row;
+        align-items: flex-start;
+        padding-top: 4px;
+        min-height: unset;
+        margin-bottom: 6px;
+      }
+
+      /* Hide left area and ghost connectors */
+      .t-left-area,
+      .t-conn.ghost,
+      .t-conn.left-conn { display: none !important; }
+
+      /* Node sits at left edge */
+      .t-node {
+        flex-shrink: 0;
+        margin-right: 0;
+        margin-top: 0;
+        width: 48px;
+        height: 48px;
+      }
+      .t-node.gold { width: 52px; height: 52px; }
+
+      /* Connector between node and card */
+      .t-conn:not(.ghost):not(.left-conn) {
+        width: 14px;
+        flex-shrink: 0;
+        display: block !important;
+      }
+
+      /* Right area fills remaining space */
+      .t-right-area {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* Cards go full width */
+      .t-card {
+        max-width: 100%;
+        width: 100%;
+        margin-bottom: 14px;
+        /* On mobile always show left accent border */
+        border-left: 4px solid !important;
+        border-right: 1px solid !important;
+        outline: none !important;
+      }
+      .t-card.amber { border-color: var(--amber); border-right-color: var(--amber-border) !important; outline: 1px solid var(--amber-border); }
+      .t-card.green { border-color: var(--green); border-right-color: var(--green-border) !important; outline: 1px solid var(--green-border); }
+      .t-card.gold  { border-color: var(--gold);  border-right-color: var(--gold-border) !important;  outline: 1px solid var(--gold-border); }
+      .t-card.slate { border-color: var(--slate); border-right-color: var(--slate-border) !important; outline: 1px solid var(--slate-border); }
+
+      /* Sleep markers shift to match left spine */
+      .sleep-marker { justify-content: flex-start; padding-left: 12px; }
+
+      /* Show the right-area mobile card (hidden on desktop) */
+      .t-right-area .t-card[data-mobile] { display: flex !important; flex-direction: column; }
+
+      /* Reveal from right on mobile */
+      .reveal.from-left { transform: translateX(20px); }
+    }
+
+    /* ── Reduced-motion respect ── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    }
+  </style>
 </head>
 <body>
+<div class="page">
 
-  <div class="scroll-space"></div>
-
-  <canvas id="scene"></canvas>
-
-  <div class="overlay" id="scanlines"></div>
-  <div class="overlay" id="vignette"></div>
-
-  <div id="hud">
-    <div class="feed"><span id="status-dot"></span>LIVE FEED // KEPLER-442b</div>
-    <div class="row"><span>LAT</span><span class="val" id="t-lat">--</span></div>
-    <div class="row"><span>LON</span><span class="val" id="t-lon">--</span></div>
-    <div class="row"><span>ALT</span><span class="val gold" id="t-alt">--</span></div>
-    <div class="row"><span>SIG</span><span id="sig-bars"><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
-    <canvas id="wave" width="190" height="44"></canvas>
-    <div id="audio-hint">CLICK TO ENGAGE AUDIO CORTEX</div>
-  </div>
-
-  <div id="scroll-hint">SCROLL TO ASCEND</div>
-
-  <div id="boot">
-    <div id="boot-inner">
-      <div class="line">INITIALIZING DEEP-FIELD ARRAY ............ <span class="ok">OK</span></div>
-      <div class="line">CALIBRATING TERRAIN OSCILLATORS .......... <span class="ok">OK</span></div>
-      <div class="line">SPOOLING PARTICLE MANIFOLD [40,000] ...... <span class="ok">OK</span></div>
-      <div class="line">ALIGNING STELLAR CATALOG [8,000] ......... <span class="ok">OK</span></div>
-      <div class="line">LINKING AUDIO CORTEX ..................... <span class="ok">STANDBY</span></div>
-      <div class="line">SIGNAL ACQUIRED — WELCOME, OBSERVER <span id="caret"></span></div>
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="mountain-wrap">
+      <svg class="mountain-svg" viewBox="0 0 640 72" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background ridges -->
+        <polygon points="0,72 70,30 130,52 220,6 310,40 390,14 470,46 540,22 640,72" fill="#2a5e40" opacity="0.11"/>
+        <polygon points="160,72 220,10 280,72" fill="#2a5e40" opacity="0.10"/>
+        <polygon points="330,72 390,18 450,72" fill="#2a5e40" opacity="0.07"/>
+        <polygon points="0,72 80,48 160,72" fill="#b87c40" opacity="0.13"/>
+        <polygon points="480,72 555,36 640,72" fill="#b87c40" opacity="0.10"/>
+        <!-- Snow caps -->
+        <polygon class="snow-cap" points="208,10 220,26 232,10" fill="white" opacity="0.6"/>
+        <polygon class="snow-cap" points="382,18 390,32 398,18" fill="white" opacity="0.45"/>
+        <!-- Horizon line -->
+        <line x1="0" y1="70" x2="640" y2="70" stroke="#b89a74" stroke-width="1.5" opacity="0.3"/>
+      </svg>
     </div>
-  </div>
+    <p class="header-eyebrow">Uttarakhand · India · 2026</p>
+    <h1 class="header-title">Deoriatal Chandrashila Trek</h1>
+    <p class="header-sub">17 – 25 September &nbsp;·&nbsp; 9 days &nbsp;·&nbsp; 12,083 ft summit</p>
+    <div class="legend">
+      <span class="pill pill-amber">Pre-Trek · Rishikesh</span>
+      <span class="pill pill-green">Trek · Indiahikes</span>
+      <span class="pill pill-gold">Summit Day</span>
+      <span class="pill pill-slate">Post-Trek</span>
+    </div>
+  </header>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.58/Tone.js"></script>
+  <!-- ── TIMELINE ── -->
+  <div class="timeline">
+    <div class="spine" id="spine"></div>
+
+    <!-- ══ SEPT 17 · Thu · ARRIVAL ══ -->
+    <div class="t-row">
+      <div class="t-left-area">
+        <div class="t-card amber reveal from-left">
+          <div class="card-label amber">Thursday · Pre-Trek</div>
+          <div class="card-title">Arrive at Rishikesh</div>
+          <div class="card-desc amber">Evening Dehradun → bus to Rishikesh · Check into Live Free Hostel</div>
+        </div>
+      </div>
+      <div class="t-conn amber left-conn"></div>
+      <div class="t-node amber reveal from-below">
+        <span class="t-node-date">17</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn amber"></div>
+      <div class="t-right-area">
+        <div class="t-card amber reveal from-right" data-mobile>
+          <div class="card-label amber">Thursday · Pre-Trek</div>
+          <div class="card-title">Arrive at Rishikesh</div>
+          <div class="card-desc amber">Evening Dehradun → bus to Rishikesh · Check into Live Free Hostel</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sleep-marker reveal from-below">
+      <span class="sleep-pill">◑&nbsp;&nbsp;Sleep · Live Free Hostel</span>
+    </div>
+
+    <!-- ══ SEPT 18 · Fri · CHILL ══ -->
+    <div class="t-row">
+      <div class="t-left-area"></div>
+      <div class="t-conn ghost left-conn"></div>
+      <div class="t-node amber reveal from-below">
+        <span class="t-node-date">18</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn amber"></div>
+      <div class="t-right-area">
+        <div class="t-card amber reveal from-right">
+          <div class="card-label amber">Friday · Free Day</div>
+          <div class="card-title">Chill in Rishikesh</div>
+          <div class="card-desc amber">Pack gear · Rest · Early night before the trek begins</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sleep-marker reveal from-below">
+      <span class="sleep-pill">◑&nbsp;&nbsp;Sleep · Live Free Hostel</span>
+    </div>
+
+    <!-- ══ SEPT 19 · Sat · TREK DAY 1 ══ -->
+    <div class="t-row" style="min-height:92px">
+      <div class="t-left-area">
+        <div class="t-card green reveal from-left">
+          <div class="card-label green">Saturday · Trek Day 1</div>
+          <div class="card-title">Drive to Base Camp</div>
+          <div class="card-desc green">7:00 AM pickup from Live Free Hostel · 190 km to Sari · 7–8 hrs via Devprayag</div>
+          <div class="card-tags"><span class="tag green">190 km</span><span class="tag green">6,560 ft base</span></div>
+        </div>
+      </div>
+      <div class="t-conn green left-conn"></div>
+      <div class="t-node green reveal from-below">
+        <span class="t-node-date">19</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn green"></div>
+      <div class="t-right-area">
+        <div class="t-card green reveal from-right" data-mobile>
+          <div class="card-label green">Saturday · Trek Day 1</div>
+          <div class="card-title">Drive to Base Camp</div>
+          <div class="card-desc green">7:00 AM pickup from Live Free Hostel · 190 km to Sari · 7–8 hrs via Devprayag</div>
+          <div class="card-tags"><span class="tag green">190 km</span><span class="tag green">6,560 ft base</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SEPT 20 · Sun · TREK DAY 2 ══ -->
+    <div class="t-row" style="min-height:92px">
+      <div class="t-left-area"></div>
+      <div class="t-conn ghost left-conn"></div>
+      <div class="t-node green reveal from-below">
+        <span class="t-node-date">20</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn green"></div>
+      <div class="t-right-area">
+        <div class="t-card green reveal from-right">
+          <div class="card-label green">Sunday · Trek Day 2</div>
+          <div class="card-title">Sari → Deoriatal</div>
+          <div class="card-desc green">First trail day · Camp by the sacred lake · Chaukhamba reflection at sunset</div>
+          <div class="card-tags"><span class="tag green">4.1 km</span><span class="tag green">7,810 ft</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SEPT 21 · Mon · TREK DAY 3 ══ -->
+    <div class="t-row" style="min-height:92px">
+      <div class="t-left-area">
+        <div class="t-card green reveal from-left">
+          <div class="card-label green">Monday · Trek Day 3</div>
+          <div class="card-title">Deoriatal → Syalmi</div>
+          <div class="card-desc green">Via Rohini Bugyal · Rhododendron forest · Foxes &amp; griffon sightings</div>
+          <div class="card-tags"><span class="tag green">9.1 km</span><span class="tag green">6–7 hrs</span></div>
+        </div>
+      </div>
+      <div class="t-conn green left-conn"></div>
+      <div class="t-node green reveal from-below">
+        <span class="t-node-date">21</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn green"></div>
+      <div class="t-right-area">
+        <div class="t-card green reveal from-right" data-mobile>
+          <div class="card-label green">Monday · Trek Day 3</div>
+          <div class="card-title">Deoriatal → Syalmi</div>
+          <div class="card-desc green">Via Rohini Bugyal · Rhododendron forest · Foxes &amp; griffon sightings</div>
+          <div class="card-tags"><span class="tag green">9.1 km</span><span class="tag green">6–7 hrs</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SEPT 22 · Tue · TREK DAY 4 ══ -->
+    <div class="t-row" style="min-height:92px">
+      <div class="t-left-area"></div>
+      <div class="t-conn ghost left-conn"></div>
+      <div class="t-node green reveal from-below">
+        <span class="t-node-date">22</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn green"></div>
+      <div class="t-right-area">
+        <div class="t-card green reveal from-right">
+          <div class="card-label green">Tuesday · Trek Day 4</div>
+          <div class="card-title">Syalmi → Baniya Kund</div>
+          <div class="card-desc green">Akashkamini river crossing · Alpine meadows · Final camp before summit</div>
+          <div class="card-tags"><span class="tag green">5.4 km</span><span class="tag green">8,520 ft</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SEPT 23 · Wed · SUMMIT ══ -->
+    <div class="t-row" style="min-height:100px">
+      <div class="t-left-area">
+        <div class="t-card gold reveal from-left">
+          <div class="card-label gold">Wednesday · Trek Day 5</div>
+          <div class="card-title gold">△ Chandrashila Summit</div>
+          <div class="card-desc gold">Via Tungnath temple · 360° Himalayan panorama · Drive back to Sari from Chopta</div>
+          <div class="card-tags"><span class="tag gold">12,083 ft</span><span class="tag gold">13 km</span><span class="tag gold">5–6 hrs</span></div>
+        </div>
+      </div>
+      <div class="t-conn gold left-conn"></div>
+      <div class="t-node gold reveal from-below">
+        <span class="t-node-date">23</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn gold"></div>
+      <div class="t-right-area">
+        <div class="t-card gold reveal from-right" data-mobile>
+          <div class="card-label gold">Wednesday · Trek Day 5</div>
+          <div class="card-title gold">△ Chandrashila Summit</div>
+          <div class="card-desc gold">Via Tungnath temple · 360° Himalayan panorama · Drive back to Sari from Chopta</div>
+          <div class="card-tags"><span class="tag gold">12,083 ft</span><span class="tag gold">13 km</span><span class="tag gold">5–6 hrs</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SEPT 24 · Thu · DRIVE BACK ══ -->
+    <div class="t-row" style="min-height:92px">
+      <div class="t-left-area"></div>
+      <div class="t-conn ghost left-conn"></div>
+      <div class="t-node green reveal from-below">
+        <span class="t-node-date">24</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn green"></div>
+      <div class="t-right-area">
+        <div class="t-card green reveal from-right">
+          <div class="card-label green">Thursday · Trek Day 6</div>
+          <div class="card-title">Drive Back to Rishikesh</div>
+          <div class="card-desc green">Sari → Rishikesh · 190 km · Arrive ~6 PM · Live Free Hostel · Rest &amp; celebrate</div>
+          <div class="card-tags"><span class="tag green">190 km</span><span class="tag green">~6 PM drop</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sleep-marker reveal from-below">
+      <span class="sleep-pill">◑&nbsp;&nbsp;Sleep · Live Free Hostel</span>
+    </div>
+
+    <!-- ══ SEPT 25 · Fri · DEPARTURE ══ -->
+    <div class="t-row">
+      <div class="t-left-area">
+        <div class="t-card slate reveal from-left">
+          <div class="card-label slate">Friday · Departure</div>
+          <div class="card-title">Rest &amp; Fly to Bangalore</div>
+          <div class="card-desc slate">Morning recovery in Rishikesh · Evening flight from Dehradun to Bangalore</div>
+        </div>
+      </div>
+      <div class="t-conn slate left-conn"></div>
+      <div class="t-node slate reveal from-below">
+        <span class="t-node-date">25</span>
+        <span class="t-node-month">SEP</span>
+      </div>
+      <div class="t-conn slate"></div>
+      <div class="t-right-area">
+        <div class="t-card slate reveal from-right" data-mobile>
+          <div class="card-label slate">Friday · Departure</div>
+          <div class="card-title">Rest &amp; Fly to Bangalore</div>
+          <div class="card-desc slate">Morning recovery in Rishikesh · Evening flight from Dehradun to Bangalore</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /timeline -->
+
+  <!-- ── FOOTER ── -->
+  <footer class="footer">
+    <p class="footer-main">Trek organized by <strong>Indiahikes</strong> &nbsp;·&nbsp; Pickup &amp; drop at Live Free Hostel, Rishikesh &nbsp;·&nbsp; Total trek distance: ~32 km</p>
+    <p class="footer-note">Note: Drop-off is Sept 24 (~6 PM) — rest day Sept 25, evening flight to Bangalore</p>
+  </footer>
+
+</div><!-- /page -->
 
 <script>
-/* eslint-disable */
-"use strict";
-
-// ===================================================================
-// === INIT ===
-// ===================================================================
-
-gsap.registerPlugin(ScrollTrigger);
-
-const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-// Capability gate: halve particle counts on mobile UAs or low-memory machines.
-const IS_MOBILE  = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-const LOW_MEMORY = (typeof navigator.deviceMemory === "number") && navigator.deviceMemory < 4;
-const LOW_END    = IS_MOBILE || LOW_MEMORY;
-
-const GALAXY_COUNT = LOW_END ? 20000 : 40000;
-const STAR_COUNT   = LOW_END ? 4000  : 8000;
-
-const canvas = document.getElementById("scene");
-const renderer = new THREE.WebGLRenderer({
-  canvas,
-  antialias: false,            // post pass softens edges; MSAA is wasted on a RT pipeline
-  powerPreference: "high-performance",
-  stencil: false,
-  depth: true
-});
-const PIXEL_RATIO = Math.min(window.devicePixelRatio || 1, 1.5); // hard cap
-renderer.setPixelRatio(PIXEL_RATIO);
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.shadowMap.enabled = false; // non-negotiable
-renderer.setClearColor(0x0a1126, 1);
-
-const scene  = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(58, window.innerWidth / window.innerHeight, 0.1, 1200);
-camera.position.set(0, 7, 19);
-
-// --- Pre-allocated scratch objects: NOTHING is allocated inside the render loop ---
-const _camBase    = new THREE.Vector3(0, 7, 19);   // scroll-driven base position
-const _camPos     = new THREE.Vector3();           // final composed camera position
-const _lookAt     = new THREE.Vector3(0, 2.5, 0);  // scroll-driven look target
-const _parallax   = new THREE.Vector2(0, 0);       // smoothed parallax offset
-const _parallaxT  = new THREE.Vector2(0, 0);       // parallax target
-const _mouseNDC   = new THREE.Vector2(0, 0);
-
-const clock = new THREE.Clock();
-let elapsed     = 0;     // accumulated, delta-clamped time
-let frameCount  = 0;
-let galaxyAngle = 0;     // accumulated spiral rotation (speed can ramp without jumps)
-
-// Scroll narrative state (written by ScrollTrigger, read in animate)
-const story = { p: 0 };
-
-// Palette (shared with shaders)
-const COL_BLUE   = new THREE.Color(0x2e7bff);
-const COL_PURPLE = new THREE.Color(0x8b5cf6);
-const COL_GOLD   = new THREE.Color(0xf0b35a);
-
-// ===================================================================
-// === SCENE ===  (terrain + orbiting lights)
-// ===================================================================
-
-// ---- Living terrain: 128x128 plane displaced by layered sine waves in GLSL ----
-const TERRAIN_SIZE = 170;
-
-const terrainUniforms = {
-  uTime:     { value: 0 },
-  uColorMix: { value: 0 },                               // 0 = volcanic, 1 = arctic
-  uL1Pos:    { value: new THREE.Vector3() },
-  uL2Pos:    { value: new THREE.Vector3() },
-  uL1Color:  { value: new THREE.Color(0xffb35c) },       // molten gold
-  uL2Color:  { value: new THREE.Color(0x3d7bff) },       // electric blue
-  uFogColor: { value: new THREE.Color(0x101a36) }
-};
-
-const terrainVert = /* glsl */`
-  uniform float uTime;
-  varying vec3 vWorldPos;
-  varying vec3 vNormal2;
-  varying float vHeight;
-
-  // Layered sine field — cheap, organic, alive. No noise textures, no Perlin.
-  float field(vec2 p, float t) {
-    float h = 0.0;
-    h += sin(p.x * 0.16 + t * 0.50) * 2.1;
-    h += sin(p.y * 0.21 - t * 0.34) * 1.9;
-    h += sin((p.x + p.y) * 0.105 + t * 0.21) * 2.9;
-    h += sin((p.x - p.y * 1.3) * 0.06 - t * 0.13) * 3.3;
-    h += sin(p.x * 0.47 - t * 0.85) * 0.55;
-    h += sin(p.y * 0.52 + t * 0.62) * 0.50;
-    h += sin((p.x * 0.74 - p.y * 0.61) + t * 1.15) * 0.28;
-    return h;
-  }
-
-  void main() {
-    vec3 pos = position;            // plane lies in local XY, rotated to XZ by the mesh
-    float e = 0.9;
-    float h  = field(pos.xy, uTime);
-    float hx = field(pos.xy + vec2(e, 0.0), uTime);
-    float hy = field(pos.xy + vec2(0.0, e), uTime);
-    pos.z += h;
-    vHeight = h;
-
-    // Finite-difference normal in local space, then to world space
-    vec3 nLocal = normalize(vec3(-(hx - h) / e, -(hy - h) / e, 1.0));
-    vNormal2 = normalize(mat3(modelMatrix) * nLocal);
-
-    vec4 wp = modelMatrix * vec4(pos, 1.0);
-    vWorldPos = wp.xyz;
-    gl_Position = projectionMatrix * viewMatrix * wp;
-  }
-`;
-
-const terrainFrag = /* glsl */`
-  precision highp float;
-  uniform float uColorMix;
-  uniform vec3 uL1Pos, uL2Pos, uL1Color, uL2Color, uFogColor;
-  varying vec3 vWorldPos;
-  varying vec3 vNormal2;
-  varying float vHeight;
-
-  // Capped-range point light: diffuse + Blinn-Phong specular, hard-faded at range
-  vec3 pointLight(vec3 lp, vec3 lc, vec3 n, vec3 p, vec3 viewDir, vec3 albedo) {
-    vec3 d = lp - p;
-    float dist = length(d);
-    vec3 L = d / max(dist, 0.001);
-    float atten = 1.0 / (1.0 + 0.038 * dist + 0.0062 * dist * dist);
-    atten *= smoothstep(52.0, 20.0, dist);            // hard range cap = no overdraw cost
-    float diff = max(dot(n, L), 0.0);
-    // Specular glints make every ridge read as a real surface
-    vec3 H = normalize(L + viewDir);
-    float spec = pow(max(dot(n, H), 0.0), 42.0);
-    return (albedo * lc * diff * 3.0 + lc * spec * 1.4) * atten;
-  }
-
-  void main() {
-    vec3 n = normalize(vNormal2);
-    vec3 viewDir = normalize(cameraPosition - vWorldPos);
-    float t = clamp(vHeight * 0.14 + 0.5, 0.0, 1.0);  // height ramp 0..1
-
-    // Volcanic ramp: charred crust -> magma orange -> molten gold
-    vec3 volcano = mix(vec3(0.10, 0.035, 0.030), vec3(0.96, 0.32, 0.07), smoothstep(0.25, 0.78, t));
-    volcano      = mix(volcano, vec3(1.0, 0.80, 0.42), smoothstep(0.82, 1.0, t));
-
-    // Arctic ramp: abyssal navy -> electric blue -> glacial white
-    vec3 arctic  = mix(vec3(0.045, 0.085, 0.20), vec3(0.20, 0.50, 1.0), smoothstep(0.22, 0.74, t));
-    arctic       = mix(arctic, vec3(0.90, 0.96, 1.0), smoothstep(0.84, 1.0, t));
-
-    vec3 base = mix(volcano, arctic, uColorMix);
-
-    // Self-glow in the valleys: magma seams / glacial lumens
-    vec3 seam = mix(vec3(1.0, 0.34, 0.06), vec3(0.28, 0.58, 1.0), uColorMix);
-    base += seam * smoothstep(0.30, 0.0, t) * 0.55;
-
-    // Hemisphere ambient: cool starlight from above, warm bounce from below.
-    // Tying ambient to the normal keeps depth even where the point lights don't reach.
-    vec3 skyAmb    = mix(vec3(0.34, 0.44, 0.72), vec3(0.46, 0.56, 0.80), uColorMix);
-    vec3 groundAmb = mix(vec3(0.30, 0.13, 0.07), vec3(0.10, 0.16, 0.32), uColorMix);
-    vec3 lit = base * mix(groundAmb, skyAmb, n.y * 0.5 + 0.5) * 1.15;
-
-    lit += pointLight(uL1Pos, uL1Color, n, vWorldPos, viewDir, base);
-    lit += pointLight(uL2Pos, uL2Color, n, vWorldPos, viewDir, base);
-
-    // Cool rim light on silhouette edges — lifts the terrain off the background
-    float rim = pow(1.0 - max(dot(n, viewDir), 0.0), 2.5);
-    lit += mix(vec3(0.35, 0.50, 1.0), vec3(0.55, 0.70, 1.0), uColorMix) * rim * 0.42;
-
-    // Distance haze into a luminous horizon (not pure black) — aerial perspective sells depth
-    float fog = smoothstep(50.0, 170.0, length(vWorldPos - cameraPosition));
-    lit = mix(lit, uFogColor, fog);
-
-    gl_FragColor = vec4(lit, 1.0);
-  }
-`;
-
-const terrainGeo = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, 128, 128); // 128x128 — no higher
-const terrainMat = new THREE.ShaderMaterial({
-  uniforms: terrainUniforms,
-  vertexShader: terrainVert,
-  fragmentShader: terrainFrag
-});
-const terrain = new THREE.Mesh(terrainGeo, terrainMat);
-terrain.rotation.x = -Math.PI / 2;
-scene.add(terrain);
-
-// ---- Two counter-orbiting light beacons (tiny additive spheres mark them) ----
-const beaconGeo = new THREE.SphereGeometry(0.75, 12, 10);
-const beacon1 = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({
-  color: 0xffc06a, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false
-}));
-const beacon2 = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({
-  color: 0x4d86ff, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.9, depthWrite: false
-}));
-scene.add(beacon1, beacon2);
-
-// ===================================================================
-// === PARTICLES ===  (40k-point galaxy spiral + 8k-star skybox)
-// ===================================================================
-
-// ---- Galaxy spiral: ONE THREE.Points draw call, all math baked at init ----
-const GALAXY_RADIUS = 64;
-const galaxyGeo = new THREE.BufferGeometry();
-{
-  const positions = new Float32Array(GALAXY_COUNT * 3);
-  const seeds     = new Float32Array(GALAXY_COUNT);
-  const radii     = new Float32Array(GALAXY_COUNT);   // normalized radius -> color ramp
-  const scales    = new Float32Array(GALAXY_COUNT);
-  const ARMS = 3;
-
-  for (let i = 0; i < GALAXY_COUNT; i++) {
-    const r = Math.pow(Math.random(), 0.55) * GALAXY_RADIUS;
-    const arm = (i % ARMS) * ((Math.PI * 2) / ARMS);
-    const curl = r * 0.085;
-    const spread = (Math.random() + Math.random() + Math.random() - 1.5) * 0.42 * (1.0 - r / GALAXY_RADIUS * 0.55);
-    const a = arm + curl + spread;
-    const puff = Math.exp(-r / 30);
-    positions[i * 3 + 0] = Math.cos(a) * r;
-    positions[i * 3 + 1] = (Math.random() + Math.random() - 1) * (1.2 + 7.5 * puff);
-    positions[i * 3 + 2] = Math.sin(a) * r;
-    seeds[i]  = Math.random();
-    radii[i]  = r / GALAXY_RADIUS;
-    scales[i] = 0.5 + Math.random();
-  }
-  galaxyGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  galaxyGeo.setAttribute("aSeed",    new THREE.BufferAttribute(seeds, 1));
-  galaxyGeo.setAttribute("aRadius",  new THREE.BufferAttribute(radii, 1));
-  galaxyGeo.setAttribute("aScale",   new THREE.BufferAttribute(scales, 1));
-}
-
-const galaxyUniforms = {
-  uTime:  { value: 0 },
-  uAngle: { value: 0 },
-  uMouse: { value: new THREE.Vector2(10, 10) },  // NDC; parked off-screen until first move
-  uSize:  { value: 95 * PIXEL_RATIO },
-  uCore:  { value: COL_GOLD.clone() },
-  uMid:   { value: COL_PURPLE.clone() },
-  uRim:   { value: COL_BLUE.clone() },
-  uHot:   { value: new THREE.Color(0xfff3d6) }
-};
-
-const galaxyVert = /* glsl */`
-  attribute float aSeed;
-  attribute float aRadius;
-  attribute float aScale;
-  uniform float uTime, uAngle, uSize;
-  uniform vec2 uMouse;
-  varying float vRadius, vSeed, vGlow;
-
-  void main() {
-    vRadius = aRadius;
-    vSeed = aSeed;
-
-    // Differential rotation: the core leads, the rim trails — the spiral winds.
-    float ang = uAngle * (1.0 + (1.0 - aRadius) * 0.45);
-    float c = cos(ang), s = sin(ang);
-    vec3 p = position;
-    p.xz = mat2(c, -s, s, c) * p.xz;
-
-    vec4 mv = modelViewMatrix * vec4(p, 1.0);
-    gl_Position = projectionMatrix * mv;
-
-    // Brightness pulse lives in the seed; size breathes with it slightly.
-    float pulse = 0.85 + 0.3 * sin(uTime * 1.6 + aSeed * 6.2831);
-    gl_PointSize = aScale * uSize * pulse / max(-mv.z, 0.1);
-
-    // Mouse proximity in NDC space — nearby particles ignite.
-    vec2 ndc = gl_Position.xy / max(gl_Position.w, 0.0001);
-    vGlow = smoothstep(0.34, 0.02, distance(ndc, uMouse));
-  }
-`;
-
-const galaxyFrag = /* glsl */`
-  precision highp float;
-  uniform float uTime;
-  uniform vec3 uCore, uMid, uRim, uHot;
-  varying float vRadius, vSeed, vGlow;
-
-  void main() {
-    float d = length(gl_PointCoord - 0.5);
-    if (d > 0.5) discard;
-    float alpha = smoothstep(0.5, 0.06, d);
-
-    // Radius ramp: gold core -> purple midlands -> electric blue rim
-    vec3 col = mix(uCore, uMid, smoothstep(0.05, 0.42, vRadius));
-    col = mix(col, uRim, smoothstep(0.45, 1.0, vRadius));
-
-    // Fragment-shader brightness pulse
-    float pulse = 0.72 + 0.28 * sin(uTime * 2.1 + vSeed * 6.2831);
-
-    // Cursor ignition: shift hue toward white-gold and overdrive brightness
-    col = mix(col, uHot, vGlow * 0.85);
-    float bright = pulse * (1.0 + vGlow * 2.2);
-
-    gl_FragColor = vec4(col * bright, alpha * (0.5 + vGlow * 0.5));
-  }
-`;
-
-const galaxyMat = new THREE.ShaderMaterial({
-  uniforms: galaxyUniforms,
-  vertexShader: galaxyVert,
-  fragmentShader: galaxyFrag,
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending
-});
-const galaxy = new THREE.Points(galaxyGeo, galaxyMat);  // Points, never InstancedMesh
-galaxy.position.set(0, 34, -85);
-galaxy.rotation.set(0.5, 0, 0.18);
-scene.add(galaxy);
-
-// ---- Procedural starfield skybox: one additive Points object, twinkle in-shader ----
-const starGeo = new THREE.BufferGeometry();
-{
-  const positions = new Float32Array(STAR_COUNT * 3);
-  const seeds     = new Float32Array(STAR_COUNT);
-  const speeds    = new Float32Array(STAR_COUNT);
-  const scales    = new Float32Array(STAR_COUNT);
-  for (let i = 0; i < STAR_COUNT; i++) {
-    // Uniform points on a far sphere shell
-    const u = Math.random() * 2 - 1;
-    const th = Math.random() * Math.PI * 2;
-    const rr = Math.sqrt(1 - u * u);
-    const R = 430 + Math.random() * 120;
-    positions[i * 3 + 0] = rr * Math.cos(th) * R;
-    positions[i * 3 + 1] = u * R;
-    positions[i * 3 + 2] = rr * Math.sin(th) * R;
-    seeds[i]  = Math.random();
-    speeds[i] = 0.5 + Math.random() * 2.4;
-    scales[i] = 0.6 + Math.random() * 1.4;
-  }
-  starGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  starGeo.setAttribute("aSeed",    new THREE.BufferAttribute(seeds, 1));
-  starGeo.setAttribute("aSpeed",   new THREE.BufferAttribute(speeds, 1));
-  starGeo.setAttribute("aScale",   new THREE.BufferAttribute(scales, 1));
-}
-
-const starUniforms = {
-  uTime: { value: 0 },
-  uSize: { value: 520 * PIXEL_RATIO }
-};
-
-const starVert = /* glsl */`
-  attribute float aSeed, aSpeed, aScale;
-  uniform float uTime, uSize;
-  varying float vTwinkle, vSeed;
-  void main() {
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_Position = projectionMatrix * mv;
-    vTwinkle = 0.55 + 0.45 * sin(uTime * aSpeed + aSeed * 6.2831);
-    vSeed = aSeed;
-    gl_PointSize = aScale * uSize / max(-mv.z, 0.1);
-  }
-`;
-
-const starFrag = /* glsl */`
-  precision highp float;
-  varying float vTwinkle, vSeed;
-  void main() {
-    float d = length(gl_PointCoord - 0.5);
-    if (d > 0.5) discard;
-    float alpha = smoothstep(0.5, 0.0, d) * vTwinkle;
-    // A scattering of warm gold stars among cool blue-white ones
-    vec3 col = mix(vec3(0.78, 0.86, 1.0), vec3(1.0, 0.82, 0.55), step(0.86, vSeed));
-    gl_FragColor = vec4(col, alpha);
-  }
-`;
-
-const stars = new THREE.Points(starGeo, new THREE.ShaderMaterial({
-  uniforms: starUniforms,
-  vertexShader: starVert,
-  fragmentShader: starFrag,
-  transparent: true,
-  depthWrite: false,
-  blending: THREE.AdditiveBlending
-}));
-scene.add(stars);
-
-// ===================================================================
-// === PANELS ===  (holographic CanvasTexture readouts)
-// ===================================================================
-
-const panelVert = /* glsl */`
-  varying vec2 vUv;
-  varying vec3 vNormalW, vViewDir;
-  void main() {
-    vUv = uv;
-    vec4 wp = modelMatrix * vec4(position, 1.0);
-    vNormalW = normalize(mat3(modelMatrix) * normal);
-    vViewDir = normalize(cameraPosition - wp.xyz);
-    gl_Position = projectionMatrix * viewMatrix * wp;
-  }
-`;
-
-const panelFrag = /* glsl */`
-  precision highp float;
-  uniform sampler2D tMap;
-  uniform float uOpacity, uTime;
-  uniform vec3 uEdge;
-  varying vec2 vUv;
-  varying vec3 vNormalW, vViewDir;
-  void main() {
-    vec4 tex = texture2D(tMap, vUv);
-
-    // Fresnel-style rim: glow strengthens at grazing view angles
-    float fres = pow(1.0 - abs(dot(normalize(vViewDir), normalize(vNormalW))), 2.0);
-
-    // Hard UV edge glow — the hologram's frame
-    float edgeDist = min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y));
-    float edge = 1.0 - smoothstep(0.0, 0.045, edgeDist);
-
-    // Faint rolling scan band inside the pane
-    float scan = 0.06 * sin(vUv.y * 90.0 - uTime * 3.0);
-
-    vec3 col = tex.rgb + uEdge * (edge * 0.9 + fres * 0.55) + scan;
-    float alpha = (tex.a * 0.78 + edge * 0.85 + fres * 0.25) * uOpacity;
-    gl_FragColor = vec4(col, alpha);
-  }
-`;
-
-const PANEL_DEFS = [
-  { id: "nav", title: "NAV // SURFACE LOCK",  pos: new THREE.Vector3(-15.5, 13.5,  2.0), edge: COL_BLUE   },
-  { id: "sig", title: "SIGNAL // UPLINK",     pos: new THREE.Vector3( 15.5, 15.0,  0.0), edge: COL_PURPLE },
-  { id: "osc", title: "OSC // AUDIO CORTEX",  pos: new THREE.Vector3(  0.0, 21.5, -9.0), edge: COL_GOLD   }
-];
-
-const panels = PANEL_DEFS.map((def) => {
-  const cv = document.createElement("canvas");
-  cv.width = 256; cv.height = 160;
-  const ctx = cv.getContext("2d");
-  const tex = new THREE.CanvasTexture(cv);
-  tex.minFilter = THREE.LinearFilter;
-
-  const mat = new THREE.ShaderMaterial({
-    uniforms: {
-      tMap:     { value: tex },
-      uOpacity: { value: 0 },
-      uTime:    { value: 0 },
-      uEdge:    { value: def.edge.clone() }
-    },
-    vertexShader: panelVert,
-    fragmentShader: panelFrag,
-    transparent: true,
-    depthWrite: false,
-    side: THREE.DoubleSide
-  });
-
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 4.75), mat);
-  mesh.position.copy(def.pos);
-  mesh.visible = false;     // culled until the narrative fades it in (saves a draw call)
-  scene.add(mesh);
-  return { def, cv, ctx, tex, mat, mesh };
-});
-
-// Draw one panel's 2D canvas. Called for ONE panel per frame (each refreshes every 3rd frame).
-function drawPanel(p, t) {
-  const { ctx, cv, def } = p;
-  ctx.clearRect(0, 0, cv.width, cv.height);
-
-  ctx.fillStyle = "rgba(8, 13, 32, 0.62)";
-  ctx.fillRect(0, 0, cv.width, cv.height);
-
-  ctx.strokeStyle = "rgba(140, 175, 255, 0.5)";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(4.5, 4.5, cv.width - 9, cv.height - 9);
-
-  ctx.font = "11px 'Courier New', monospace";
-  ctx.fillStyle = "#cfe0ff";
-  ctx.fillText(def.title, 14, 24);
-  ctx.fillStyle = "rgba(140, 175, 255, 0.4)";
-  ctx.fillRect(14, 31, cv.width - 28, 1);
-
-  ctx.font = "12px 'Courier New', monospace";
-
-  if (def.id === "nav") {
-    // Fake drifting surface coordinates
-    ctx.fillStyle = "#9fc1ff";
-    ctx.fillText("LAT  " + (12.3 + Math.sin(t * 0.11) * 3.7).toFixed(4) + "\u00B0 N", 16, 58);
-    ctx.fillText("LON  " + (84.6 + Math.cos(t * 0.07) * 5.2).toFixed(4) + "\u00B0 W", 16, 80);
-    ctx.fillStyle = "#f0b35a";
-    ctx.fillText("ALT  " + (1840 + Math.sin(t * 0.23) * 260).toFixed(1) + " M", 16, 102);
-    ctx.fillStyle = "#8b5cf6";
-    ctx.fillText("DRIFT VECTOR  " + (Math.sin(t * 0.31) * 9).toFixed(2) + " M/S", 16, 124);
-    ctx.fillStyle = "rgba(46,123,255,0.9)";
-    ctx.fillRect(16, 138, 60 + 50 * (0.5 + 0.5 * Math.sin(t * 0.6)), 4);
-  } else if (def.id === "sig") {
-    // Signal strength bars
-    for (let i = 0; i < 12; i++) {
-      const h = 14 + 64 * Math.abs(Math.sin(t * 1.4 + i * 0.62));
-      const hot = h > 62;
-      ctx.fillStyle = hot ? "rgba(240,179,90,0.95)" : "rgba(139,92,246,0.85)";
-      ctx.fillRect(18 + i * 19, 130 - h, 12, h);
-    }
-    ctx.fillStyle = "#9fc1ff";
-    ctx.fillText("UPLINK " + (92 + Math.sin(t * 0.9) * 6).toFixed(1) + "%", 16, 150);
-  } else {
-    // Oscilloscope: live Tone.Analyser waveform if audio is running, else a carrier sine
-    ctx.strokeStyle = "#f0b35a";
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    const wave = (audio.started && audio.analyser) ? audio.analyser.getValue() : null;
-    const N = 64;
-    for (let i = 0; i <= N; i++) {
-      const x = 16 + (i / N) * (cv.width - 32);
-      let v;
-      if (wave) {
-        v = wave[Math.min(wave.length - 1, Math.floor((i / N) * (wave.length - 1)))] * 2.2;
-      } else {
-        v = Math.sin(i * 0.45 + t * 4.0) * 0.5 * (0.6 + 0.4 * Math.sin(t * 0.8));
+  const isMobile = () => window.innerWidth <= 640;
+
+  // ── Show/hide cards based on viewport ──
+  function layoutCards() {
+    const mobile = isMobile();
+    document.querySelectorAll('.t-row').forEach(row => {
+      const leftCards  = row.querySelectorAll('.t-left-area .t-card');
+      const rightCards = row.querySelectorAll('.t-right-area .t-card');
+      rightCards.forEach(c => {
+        if (c.hasAttribute('data-mobile')) {
+          c.style.display = mobile ? '' : 'none';
+        }
+      });
+      // On mobile, make sure any visible right card reveals from right
+      if (mobile) {
+        rightCards.forEach(c => {
+          if (!c.hasAttribute('data-mobile')) return;
+          c.classList.remove('from-left');
+          c.classList.add('from-right');
+        });
       }
-      const y = 92 - v * 42;
-      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    ctx.fillStyle = "#9fc1ff";
-    ctx.fillText(audio.started ? "CARRIER LOCKED" : "AWAITING INPUT", 16, 150);
-  }
-
-  p.tex.needsUpdate = true;
-}
-
-// ===================================================================
-// === POSTFX ===  (single fullscreen pass: chromatic aberration + grain)
-// ===================================================================
-// Render-target budget: exactly ONE (the scene buffer). No bloom, no PMREM.
-
-let renderTarget = new THREE.WebGLRenderTarget(
-  Math.floor(window.innerWidth * PIXEL_RATIO),
-  Math.floor(window.innerHeight * PIXEL_RATIO),
-  { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBFormat, depthBuffer: true, stencilBuffer: false }
-);
-
-const ABERRATION_BASE = 0.0016;
-const postUniforms = {
-  tDiffuse:    { value: renderTarget.texture },
-  uTime:       { value: 0 },
-  uAberration: { value: ABERRATION_BASE },
-  uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
-};
-
-const postScene  = new THREE.Scene();
-const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-const postQuad = new THREE.Mesh(
-  new THREE.PlaneGeometry(2, 2),
-  new THREE.ShaderMaterial({
-    uniforms: postUniforms,
-    depthTest: false,
-    depthWrite: false,
-    vertexShader: /* glsl */`
-      varying vec2 vUv;
-      void main() {
-        vUv = uv;
-        gl_Position = vec4(position.xy, 0.0, 1.0);
-      }
-    `,
-    fragmentShader: /* glsl */`
-      precision highp float;
-      uniform sampler2D tDiffuse;
-      uniform float uTime, uAberration;
-      uniform vec2 uResolution;
-      varying vec2 vUv;
-
-      float hash(vec2 p) {
-        return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-      }
-
-      void main() {
-        vec2 dir = vUv - 0.5;
-        float dist = length(dir);
-
-        // Chromatic aberration — RGB channels splay outward from center
-        float ab = uAberration * (0.4 + dist * 2.2);
-        float r = texture2D(tDiffuse, vUv + dir * ab).r;
-        float g = texture2D(tDiffuse, vUv).g;
-        float b = texture2D(tDiffuse, vUv - dir * ab).b;
-        vec3 col = vec3(r, g, b);
-
-        // Gentle exposure lift — brightens mids without crushing the void
-        col = col * 1.18 + vec3(0.012, 0.015, 0.026);
-
-        // Subtle animated film grain
-        float grain = (hash(vUv * uResolution * 0.5 + fract(uTime) * 91.7) - 0.5) * 0.055;
-        col += grain;
-
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `
-  })
-);
-postQuad.frustumCulled = false;
-postScene.add(postQuad);
-
-// ===================================================================
-// === AUDIO ===  (Tone.js generative ambient engine, armed on first click)
-// ===================================================================
-
-const audio = { started: false, analyser: null };
-
-async function startAudio() {
-  if (audio.started) return;
-  audio.started = true;
-  try {
-    await Tone.start();
-
-    // Master shape: pad -> filter -> reverb -> delay -> panner -> out (+ analyser tap)
-    const panner   = new Tone.Panner(0);
-    const delay    = new Tone.FeedbackDelay({ delayTime: "4n.", feedback: 0.32, wet: 0.22 });
-    const reverb   = new Tone.Reverb({ decay: 9, wet: 0.38 });
-    const filter   = new Tone.Filter({ frequency: 700, type: "lowpass", rolloff: -24, Q: 0.8 });
-    const analyser = new Tone.Analyser("waveform", 128);
-    audio.analyser = analyser;
-
-    filter.connect(reverb);
-    reverb.connect(delay);
-    delay.connect(panner);
-    panner.toDestination();
-    panner.connect(analyser);
-
-    if (typeof reverb.generate === "function") reverb.generate();
-
-    // Droning pad: slow-breathing PolySynth chords
-    const pad = new Tone.PolySynth(Tone.Synth, {
-      maxPolyphony: 8,
-      volume: -14,
-      oscillator: { type: "fatsawtooth", count: 3, spread: 24 },
-      envelope: { attack: 3.5, decay: 1.0, sustain: 0.85, release: 7 }
-    }).connect(filter);
-
-    const CHORDS = [
-      ["C2", "G2", "D3", "A3"],
-      ["A1", "E2", "B2", "F#3"],
-      ["F1", "C2", "G2", "E3"],
-      ["G1", "D2", "A2", "E3"]
-    ];
-    let chordIndex = 0;
-    new Tone.Loop((time) => {
-      pad.triggerAttackRelease(CHORDS[chordIndex % CHORDS.length], "2m", time);
-      chordIndex++;
-    }, "2m").start(0);
-
-    // Subtle pulse every 2 beats — a sonar ping from the surface
-    const ping = new Tone.Synth({
-      volume: -22,
-      oscillator: { type: "sine" },
-      envelope: { attack: 0.004, decay: 0.32, sustain: 0, release: 0.25 }
-    }).connect(reverb);
-    let pingStep = 0;
-    new Tone.Loop((time) => {
-      ping.triggerAttackRelease(pingStep % 4 === 0 ? "G5" : "C5", "16n", time);
-      pingStep++;
-    }, "2n").start("4n");
-
-    // Click-triggered bass impact (shared with the aberration flash)
-    audio.bass = new Tone.MembraneSynth({
-      volume: -8,
-      pitchDecay: 0.09,
-      octaves: 5,
-      envelope: { attack: 0.002, decay: 0.7, sustain: 0, release: 0.5 }
-    }).connect(reverb);
-
-    // Slow modulation: filter cutoff and reverb wetness wander on LFOs
-    new Tone.LFO({ frequency: 0.045, min: 320, max: 1500 }).connect(filter.frequency).start();
-    new Tone.LFO({ frequency: 0.02, min: 0.22, max: 0.55 }).connect(reverb.wet).start();
-
-    // Stereo panning shifts gently with TIME (an LFO), never with the camera
-    new Tone.LFO({ frequency: 0.03, min: -0.45, max: 0.45 }).connect(panner.pan).start();
-
-    Tone.Transport.bpm.value = 64;
-    Tone.Transport.start();
-
-    document.getElementById("audio-hint").style.display = "none";
-  } catch (err) {
-    // Audio is garnish, never a blocker
-    console.warn("Audio cortex offline:", err);
-  }
-}
-
-function triggerBass() {
-  if (audio.started && audio.bass) {
-    try { audio.bass.triggerAttackRelease("C1", "8n"); } catch (e) { /* ignore */ }
-  }
-}
-
-// ===================================================================
-// === INTERACTIONS ===  (pointer parallax, click flash, scroll story)
-// ===================================================================
-
-window.addEventListener("mousemove", (e) => {
-  _mouseNDC.x = (e.clientX / window.innerWidth) * 2 - 1;
-  _mouseNDC.y = -(e.clientY / window.innerHeight) * 2 + 1;
-  _parallaxT.set(_mouseNDC.x * 2.6, _mouseNDC.y * 1.3);
-  galaxyUniforms.uMouse.value.copy(_mouseNDC);
-}, { passive: true });
-
-window.addEventListener("click", () => {
-  startAudio();
-  triggerBass();
-  if (!REDUCED_MOTION) {
-    // 0.4s chromatic aberration flash
-    gsap.killTweensOf(postUniforms.uAberration);
-    gsap.timeline()
-      .to(postUniforms.uAberration, { value: 0.016, duration: 0.08, ease: "power2.out" })
-      .to(postUniforms.uAberration, { value: ABERRATION_BASE, duration: 0.32, ease: "power2.in" });
-  }
-});
-
-// Scroll-driven narrative: one scrubbed tween writes story.p, animate() reads it
-gsap.to(story, {
-  p: 1,
-  ease: "none",
-  scrollTrigger: {
-    trigger: ".scroll-space",
-    start: "top top",
-    end: "bottom bottom",
-    scrub: 0.7
-  }
-});
-
-// ===================================================================
-// === HUD ===  (CSS-layer telemetry + boot sequence)
-// ===================================================================
-
-const tLat = document.getElementById("t-lat");
-const tLon = document.getElementById("t-lon");
-const tAlt = document.getElementById("t-alt");
-const sigBars = Array.from(document.querySelectorAll("#sig-bars i"));
-const waveCanvas = document.getElementById("wave");
-const waveCtx = waveCanvas.getContext("2d");
-
-setInterval(() => {
-  const t = performance.now() * 0.001;
-  tLat.textContent = (12.3402 + Math.sin(t * 0.13) * 2.1).toFixed(5) + "\u00B0 N";
-  tLon.textContent = (84.6017 + Math.cos(t * 0.09) * 3.4).toFixed(5) + "\u00B0 W";
-  tAlt.textContent = (1840 + Math.sin(t * 0.21) * 240 + story.p * 5200).toFixed(1) + " M";
-  const sig = 0.55 + 0.45 * Math.sin(t * 0.7);
-  for (let i = 0; i < sigBars.length; i++) {
-    const on = (i / sigBars.length) < sig;
-    sigBars[i].style.height = (3 + i * 1.8) + "px";
-    sigBars[i].style.opacity = on ? "1" : "0.18";
-  }
-}, 140);
-
-// Corner-HUD waveform (drawn from animate(), throttled to every 3rd frame)
-function drawHudWave(t) {
-  const w = waveCanvas.width, h = waveCanvas.height;
-  waveCtx.clearRect(0, 0, w, h);
-  waveCtx.strokeStyle = "rgba(46, 123, 255, 0.95)";
-  waveCtx.lineWidth = 1.4;
-  waveCtx.beginPath();
-  const wave = (audio.started && audio.analyser) ? audio.analyser.getValue() : null;
-  const N = 60;
-  for (let i = 0; i <= N; i++) {
-    const x = (i / N) * w;
-    let v;
-    if (wave) {
-      v = wave[Math.min(wave.length - 1, Math.floor((i / N) * (wave.length - 1)))] * 2.4;
-    } else {
-      v = Math.sin(i * 0.5 + t * 3.2) * 0.35;
-    }
-    const y = h * 0.5 - v * h * 0.42;
-    if (i === 0) waveCtx.moveTo(x, y); else waveCtx.lineTo(x, y);
-  }
-  waveCtx.stroke();
-}
-
-// Boot screen: terminal lines land one by one, then the curtain lifts
-(function boot() {
-  const lines = Array.from(document.querySelectorAll("#boot-inner .line"));
-  const step = REDUCED_MOTION ? 60 : 380;
-  lines.forEach((line, i) => {
-    setTimeout(() => line.classList.add("show"), 500 + i * step);
-  });
-  const total = 500 + lines.length * step + 700;
-  setTimeout(() => {
-    gsap.to("#boot", {
-      opacity: 0,
-      duration: 1.4,
-      ease: "power2.inOut",
-      onComplete: () => { document.getElementById("boot").style.display = "none"; }
     });
-    document.getElementById("hud").classList.add("on");
-    document.getElementById("scroll-hint").classList.add("on");
-  }, total);
-})();
-
-// ===================================================================
-// === ANIMATE ===  (the one loop: clamped delta, zero allocations)
-// ===================================================================
-
-const BREATHE_AMP = REDUCED_MOTION ? 0 : 1;
-
-function animate() {
-  requestAnimationFrame(animate);
-
-  // Delta-time clamp: a hitching frame can never lurch the simulation
-  const dt = Math.min(clock.getDelta(), 0.05);
-  elapsed += dt;
-  frameCount++;
-  const p = story.p;
-
-  // ---- Scroll narrative, act I (0–33%): pull back from the surface ----
-  const act1 = Math.min(p / 0.33, 1);
-  const pull = act1 * act1 * (3 - 2 * act1); // smoothstep ease
-  _camBase.set(0, 7 + pull * 26, 19 + pull * 52);
-  _lookAt.set(0, 2.5 + pull * 3.5, 0);
-
-  // ---- Act II (33–66%): the planet freezes — volcanic to arctic ----
-  const act2 = Math.max(0, Math.min((p - 0.33) / 0.33, 1));
-  terrainUniforms.uColorMix.value = act2;
-  // The gold beacon cools toward ice-white as the planet freezes (no allocation)
-  terrainUniforms.uL1Color.value.setRGB(
-    1.0 - act2 * 0.35, 0.70 + act2 * 0.18, 0.36 + act2 * 0.55
-  );
-
-  // ---- Act III (66–100%): holograms wake, the galaxy spins up ----
-  const act3 = Math.max(0, Math.min((p - 0.66) / 0.34, 1));
-  for (let i = 0; i < panels.length; i++) {
-    const o = Math.max(0, Math.min(act3 * 3.4 - i * 1.05, 1));
-    panels[i].mat.uniforms.uOpacity.value = o;
-    panels[i].mesh.visible = o > 0.01;
   }
-  const spinSpeed = 0.05 + act3 * 0.14;
-  galaxyAngle += dt * spinSpeed;            // accumulate — ramping speed never jumps
 
-  // ---- Camera: breathe (pure sine), parallax (lerp 0.05), compose ----
-  _parallax.x += (_parallaxT.x - _parallax.x) * 0.05;
-  _parallax.y += (_parallaxT.y - _parallax.y) * 0.05;
-  _camPos.set(
-    _camBase.x + Math.sin(elapsed * 0.26) * 1.1 * BREATHE_AMP + _parallax.x,
-    _camBase.y + Math.sin(elapsed * 0.41) * 0.65 * BREATHE_AMP + _parallax.y,
-    _camBase.z + Math.sin(elapsed * 0.19) * 0.8 * BREATHE_AMP
-  );
-  camera.position.copy(_camPos);
-  camera.lookAt(_lookAt);
+  // ── Spine grow ──
+  window.addEventListener('load', () => {
+    layoutCards();
+    setTimeout(() => document.getElementById('spine').classList.add('grown'), 150);
 
-  // ---- Counter-orbiting point lights ----
-  const a1 = elapsed * 0.42, a2 = -elapsed * 0.31 + 2.1;
-  terrainUniforms.uL1Pos.value.set(Math.cos(a1) * 26, 9.5 + Math.sin(elapsed * 0.7) * 2.0, Math.sin(a1) * 26);
-  terrainUniforms.uL2Pos.value.set(Math.cos(a2) * 33, 13.0 + Math.cos(elapsed * 0.5) * 2.5, Math.sin(a2) * 33);
-  beacon1.position.copy(terrainUniforms.uL1Pos.value);
-  beacon2.position.copy(terrainUniforms.uL2Pos.value);
+    // Staggered header entrance
+    const headerEls = [
+      ['.mountain-svg',    0],
+      ['.header-eyebrow',  0],
+      ['.header-title',    0],
+      ['.header-sub',      0],
+      ['.legend',          0],
+    ];
+    headerEls.forEach(([sel]) => {
+      const el = document.querySelector(sel);
+      if (el) el.classList.add('visible');
+    });
+  });
 
-  // ---- Shader clocks ----
-  terrainUniforms.uTime.value = elapsed;
-  galaxyUniforms.uTime.value  = elapsed;
-  galaxyUniforms.uAngle.value = galaxyAngle;
-  starUniforms.uTime.value    = elapsed;
-  postUniforms.uTime.value    = elapsed;
+  window.addEventListener('resize', layoutCards);
 
-  // ---- Throttle: one panel canvas per frame (each refreshes every 3rd frame) ----
-  const pi = frameCount % 3;
-  if (panels[pi].mesh.visible) {
-    drawPanel(panels[pi], elapsed);
-    panels[pi].mat.uniforms.uTime.value = elapsed;
-  }
-  panels[0].mesh.quaternion.copy(camera.quaternion);  // gentle billboarding
-  panels[1].mesh.quaternion.copy(camera.quaternion);
-  panels[2].mesh.quaternion.copy(camera.quaternion);
-  if (frameCount % 3 === 0) drawHudWave(elapsed);
+  // ── Scroll reveal ──
+  const revealObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const row = el.closest('.t-row');
+      const siblings = row ? [...row.querySelectorAll('.reveal:not(.visible)')] : [];
+      const idx = siblings.indexOf(el);
+      setTimeout(() => el.classList.add('visible'), idx * 90);
+      revealObs.unobserve(el);
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -16px 0px' });
 
-  // ---- Render: scene -> single RT -> fullscreen post quad -> screen ----
-  renderer.setRenderTarget(renderTarget);
-  renderer.render(scene, camera);
-  renderer.setRenderTarget(null);
-  renderer.render(postScene, postCamera);
-}
-animate();
+  document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
 
-// ===================================================================
-// === RESIZE ===
-// ===================================================================
-
-window.addEventListener("resize", () => {
-  const w = window.innerWidth, h = window.innerHeight;
-  camera.aspect = w / h;
-  camera.updateProjectionMatrix();
-  renderer.setSize(w, h);
-  renderTarget.setSize(Math.floor(w * PIXEL_RATIO), Math.floor(h * PIXEL_RATIO));
-  postUniforms.uResolution.value.set(w, h);
-  ScrollTrigger.refresh();
-});
+  // Footer reveal
+  const footerObs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        footerObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.2 });
+  footerObs.observe(document.querySelector('.footer'));
 </script>
 </body>
 </html>
